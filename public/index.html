@@ -527,7 +527,7 @@
           </div>
           <div class="fixtures" id="fixtures"></div>
           <div class="bottom">
-            <div class="saved" id="saved">Scores save automatically</div>
+            <div class="saved" id="saved">Loading shared scores…</div>
             <div class="actions">
               <button class="btn" id="reset">Reset scores</button
               ><button class="btn primary" id="share">Copy table</button>
@@ -561,15 +561,10 @@
       );
       const initial = {};
       rounds.flat().forEach((g) => (initial[g.key] = { home: "", away: "" }));
-      const storageKey = "shift-team-c-league-v4";
-      let scores;
-      try {
-        scores =
-          JSON.parse(localStorage.getItem(storageKey)) ||
-          structuredClone(initial);
-      } catch {
-        scores = structuredClone(initial);
-      }
+      let scores = structuredClone(initial);
+      let saveTimer;
+      let saveQueue = Promise.resolve();
+      const apiUrl = "/.netlify/functions/scores";
       for (const k of Object.keys(initial))
         if (!scores[k]) scores[k] = { ...initial[k] };
       const select = document.querySelector("#roundSelect");
@@ -669,12 +664,9 @@
           v = el.value;
         }
         scores[key][side] = v;
-        try {
-          localStorage.setItem(storageKey, JSON.stringify(scores));
-          document.querySelector("#saved").textContent = "Saved on this device";
-        } catch {
-          document.querySelector("#saved").textContent = "Autosave unavailable";
-        }
+        document.querySelector("#saved").textContent = "Unsaved changes";
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveSharedScores, 500);
         renderTable();
         const match = el.closest(".match");
         const complete = isPlayed(scores[key]);
@@ -683,6 +675,57 @@
           : "UPCOMING";
         document.querySelector("#matchCount").textContent =
           `${rounds[current].filter((g) => isPlayed(scores[g.key])).length} of 3 matches played this matchday`;
+      }
+      async function getEditorKey() {
+        let key = sessionStorage.getItem("shift-team-c-editor-key");
+        if (!key) {
+          key = prompt("Enter the league editor key to save this score:");
+          if (!key) return null;
+          sessionStorage.setItem("shift-team-c-editor-key", key);
+        }
+        return key;
+      }
+      async function saveSharedScores() {
+        const key = await getEditorKey();
+        if (!key) {
+          document.querySelector("#saved").textContent = "Score not shared";
+          await loadSharedScores();
+          return;
+        }
+        const snapshot = JSON.stringify(scores);
+        saveQueue = saveQueue.then(async () => {
+          const response = await fetch(apiUrl, {
+            method: "PUT",
+            headers: { "content-type": "application/json", "x-league-key": key },
+            body: snapshot,
+          });
+          if (response.status === 401) {
+            sessionStorage.removeItem("shift-team-c-editor-key");
+            document.querySelector("#saved").textContent = "Editor key rejected";
+            await loadSharedScores();
+            return;
+          }
+          if (!response.ok) throw new Error("Save failed");
+          document.querySelector("#saved").textContent = "Shared with everyone · saved";
+        }).catch(() => {
+          document.querySelector("#saved").textContent = "Could not save shared scores";
+        });
+        await saveQueue;
+      }
+      async function loadSharedScores() {
+        try {
+          const response = await fetch(apiUrl, { cache: "no-store" });
+          if (!response.ok) throw new Error("Load failed");
+          const shared = await response.json();
+          if (document.querySelector("#fixtures input:focus")) return;
+          for (const k of Object.keys(initial))
+            scores[k] = shared[k] || { ...initial[k] };
+          renderTable();
+          if (!document.querySelector("#fixtures input:focus")) renderFixtures();
+          document.querySelector("#saved").textContent = "Shared league scores · live";
+        } catch {
+          document.querySelector("#saved").textContent = "Could not load shared scores";
+        }
       }
       function show() {
         select.value = current;
@@ -704,10 +747,9 @@
         if (!confirm("Clear every entered score and reset the league table?"))
           return;
         scores = structuredClone(initial);
-        localStorage.removeItem(storageKey);
         renderTable();
         show();
-        document.querySelector("#saved").textContent = "Scores cleared";
+        saveSharedScores();
       };
       document.querySelector("#share").onclick = async () => {
         const rows = tableData(),
@@ -733,8 +775,10 @@
         clearTimeout(toastTimer);
         toastTimer = setTimeout(() => t.classList.remove("show"), 2000);
       }
+      loadSharedScores();
       renderTable();
       show();
+      setInterval(loadSharedScores, 20000);
     </script>
   </body>
 </html>
