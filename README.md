@@ -2,6 +2,8 @@
 
 The league table uses Netlify Blobs for shared results. Visitors can read the table; score edits and resets require an editor key.
 
+The bottom two teams are eliminated after the league. The top four qualify for semifinals (1st vs 4th and 2nd vs 3rd), played over two legs. Aggregate draws are decided by the penalty-winner selector. The semifinal winners play the final for champion and runner-up; the semifinal losers play for third place.
+
 ## Deploy on Netlify
 
 Deploy this folder (`outputs`) as the site base directory from a Git-connected Netlify project or the Netlify CLI. The `netlify.toml` publishes `public/` and deploys the function from `netlify/functions/`; a static drag-and-drop deploy of only the HTML file will not deploy the function. Netlify installs the `@netlify/blobs` dependency from `package.json` during the build.

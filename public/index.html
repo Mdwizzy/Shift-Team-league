@@ -301,6 +301,20 @@
         margin-top: 4px;
         min-height: 14px;
       }
+      .stage-note {
+        margin: 8px 6px 2px;
+        padding: 13px 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #ffffff05;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .stage-note strong { color: var(--text); font-size: 13px; }
+      .tie-break { margin-top: 7px; display: grid; gap: 5px; justify-items: center; }
+      .tie-break label { color: var(--orange); font-size: 9px; text-align: center; }
+      .penalty-winner { padding: 6px 26px 6px 8px; font-size: 11px; }
       .bottom {
         display: flex;
         justify-content: space-between;
@@ -468,7 +482,7 @@
       <header>
         <div>
           <h1>Shift Team C<br />League</h1>
-          <p class="sub">Six teams. Ten matchdays. One champion.</p>
+          <p class="sub">30 league matches · two-leg semifinals · final & third place</p>
         </div>
         <div class="season">DOUBLE ROUND ROBIN&nbsp; · &nbsp;30 MATCHES</div>
       </header>
@@ -500,9 +514,7 @@
               <tbody id="standings"></tbody>
             </table>
           </div>
-          <div class="table-foot">
-            3 points for a win · 1 for a draw · 0 for a loss
-          </div>
+          <div class="table-foot">Bottom two are eliminated after the league · 3 points for a win · 1 for a draw</div>
         </section>
         <section class="card fixtures-card">
           <div class="card-head">
@@ -560,7 +572,10 @@
         ),
       );
       const initial = {};
-      rounds.flat().forEach((g) => (initial[g.key] = { home: "", away: "" }));
+      rounds.flat().forEach((g) => (initial[g.key] = { home: "", away: "", winner: "" }));
+      ["semi1-leg1", "semi1-leg2", "semi2-leg1", "semi2-leg2", "final", "third-place"].forEach(
+        (key) => (initial[key] = { home: "", away: "", winner: "" }),
+      );
       let scores = structuredClone(initial);
       let saveTimer;
       let saveQueue = Promise.resolve();
@@ -574,6 +589,14 @@
         o.textContent = `Matchday ${i + 1}`;
         select.appendChild(o);
       });
+      ["Semifinals · 1st leg", "Semifinals · 2nd leg", "Final & 3rd place"].forEach(
+        (label, i) => {
+          const o = document.createElement("option");
+          o.value = 10 + i;
+          o.textContent = label;
+          select.appendChild(o);
+        },
+      );
       let current = 0;
       const isPlayed = (s) =>
         s.home !== "" &&
@@ -639,6 +662,10 @@
           .join("");
       }
       function renderFixtures() {
+        if (current >= 10) {
+          renderPlayoffs();
+          return;
+        }
         const games = rounds[current];
         document.querySelector("#fixtures").innerHTML = games
           .map((g) => {
@@ -654,10 +681,102 @@
           .querySelectorAll(".score input")
           .forEach((input) => input.addEventListener("input", onScore));
       }
+
+      function leagueComplete() {
+        return rounds.flat().every((g) => isPlayed(scores[g.key]));
+      }
+      function semifinalTeams() {
+        return leagueComplete() ? tableData().slice(0, 4).map((x) => x.team) : null;
+      }
+      function legPair(seedTop, seedBottom, key, secondLeg = false) {
+        return secondLeg
+          ? { home: seedTop, away: seedBottom, key }
+          : { home: seedBottom, away: seedTop, key };
+      }
+      function twoLegResult(top, bottom, key1, key2) {
+        const first = scores[key1], second = scores[key2];
+        if (!isPlayed(first) || !isPlayed(second)) return { winner: null, loser: null, tied: false };
+        const topGoals = +first.away + +second.home;
+        const bottomGoals = +first.home + +second.away;
+        if (topGoals > bottomGoals) return { winner: top, loser: bottom, tied: false };
+        if (bottomGoals > topGoals) return { winner: bottom, loser: top, tied: false };
+        const decision = second.winner;
+        return { winner: [top, bottom].includes(decision) ? decision : null, loser: [top, bottom].includes(decision) ? (decision === top ? bottom : top) : null, tied: true };
+      }
+      function playoffMatch(match, penaltyTeams = []) {
+        const s = scores[match.key] || { home: "", away: "", winner: "" };
+        const played = isPlayed(s);
+        const penaltyNeeded = penaltyTeams.length === 2 && played && +s.home === +s.away;
+        const penalty = penaltyNeeded
+          ? `<div class="tie-break"><label for="winner-${match.key}">Level on aggregate · winner on penalties</label><select class="select penalty-winner" id="winner-${match.key}" data-key="${match.key}" data-team="winner"><option value="">Choose winner</option>${penaltyTeams.map((team) => `<option value="${team}" ${s.winner === team ? "selected" : ""}>${team}</option>`).join("")}</select></div>`
+          : "";
+        return `<div class="match" data-match-key="${match.key}"><div class="side"><span class="crest">${match.home.slice(0, 2).toUpperCase()}</span><span>${match.home}</span></div><div><div class="score"><input inputmode="numeric" type="number" min="0" max="99" aria-label="${match.home} goals" data-team="home" data-key="${match.key}" value="${s.home}" placeholder="–"><span class="dash">:</span><input inputmode="numeric" type="number" min="0" max="99" aria-label="${match.away} goals" data-team="away" data-key="${match.key}" value="${s.away}" placeholder="–"></div><div class="status">${played ? "FULL TIME" : "UPCOMING"}</div>${penalty}</div><div class="side away"><span>${match.away}</span><span class="crest">${match.away.slice(0, 2).toUpperCase()}</span></div></div>`;
+      }
+      function renderPlayoffs() {
+        const seeds = semifinalTeams();
+        const fixtures = document.querySelector("#fixtures");
+        if (!seeds) {
+          fixtures.innerHTML = `<div class="stage-note"><strong>League stage in progress</strong><br>Finish all 30 league matches to confirm the top four. Teams in 5th and 6th are eliminated.</div>`;
+          document.querySelector("#matchCount").textContent = "Top four advance to the semifinals";
+          return;
+        }
+        const [first, second, third, fourth] = seeds;
+        if (current === 10 || current === 11) {
+          const isSecond = current === 11;
+          const games = [
+            legPair(first, fourth, isSecond ? "semi1-leg2" : "semi1-leg1", isSecond),
+            legPair(second, third, isSecond ? "semi2-leg2" : "semi2-leg1", isSecond),
+          ];
+          const t1 = twoLegResult(first, fourth, "semi1-leg1", "semi1-leg2");
+          const t2 = twoLegResult(second, third, "semi2-leg1", "semi2-leg2");
+          const tie1 = isSecond && t1.tied ? [first, fourth] : [];
+          const tie2 = isSecond && t2.tied ? [second, third] : [];
+          fixtures.innerHTML = `<div class="stage-note"><strong>Semifinals · ${isSecond ? "Second leg" : "First leg"}</strong><br>Seed 1 (${first}) vs seed 4 (${fourth}) · Seed 2 (${second}) vs seed 3 (${third})</div>${playoffMatch(games[0], tie1)}${playoffMatch(games[1], tie2)}<div class="table-foot">Two legs per tie. Aggregate score decides; tied aggregates go to penalties.</div>`;
+          const complete = games.filter((g) => isPlayed(scores[g.key])).length;
+          document.querySelector("#matchCount").textContent = `${complete} of 2 semifinal matches played this leg`;
+        } else {
+          const s1 = twoLegResult(first, fourth, "semi1-leg1", "semi1-leg2");
+          const s2 = twoLegResult(second, third, "semi2-leg1", "semi2-leg2");
+          if (!s1.winner || !s2.winner) {
+            fixtures.innerHTML = `<div class="stage-note"><strong>Final stage awaits the semifinals</strong><br>Complete both two-leg semifinal ties${s1.tied || s2.tied ? " and enter the penalty winners" : ""} to set the final and third-place match.</div>`;
+            document.querySelector("#matchCount").textContent = "Semifinal results determine the finalists";
+            return;
+          }
+          const final = { home: s1.winner, away: s2.winner, key: "final" };
+          const thirdPlace = { home: s1.loser, away: s2.loser, key: "third-place" };
+          const finals = [
+            playoffMatch(final, [final.home, final.away]),
+            playoffMatch(thirdPlace, [thirdPlace.home, thirdPlace.away]),
+          ];
+          const finalScore = scores.final, bronzeScore = scores["third-place"];
+          const title = isPlayed(finalScore) && finalScore.home !== finalScore.away
+            ? `Champion: ${+finalScore.home > +finalScore.away ? final.home : final.away} · Runner-up: ${+finalScore.home > +finalScore.away ? final.away : final.home}`
+            : isPlayed(finalScore) && finalScore.winner
+              ? `Champion: ${finalScore.winner} · Runner-up: ${finalScore.winner === final.home ? final.away : final.home}`
+              : "Final & third-place playoff";
+          const bronze = isPlayed(bronzeScore) && bronzeScore.home !== bronzeScore.away
+            ? `Third place: ${+bronzeScore.home > +bronzeScore.away ? thirdPlace.home : thirdPlace.away}`
+            : isPlayed(bronzeScore) && bronzeScore.winner
+              ? `Third place: ${bronzeScore.winner}`
+            : "The third-place match determines bronze";
+          fixtures.innerHTML = `<div class="stage-note"><strong>${title}</strong><br>${bronze}</div>${finals.join("")}<div class="table-foot">The final determines champion and runner-up. The playoff determines third place.</div>`;
+          document.querySelector("#matchCount").textContent = `${["final", "third-place"].filter((k) => isPlayed(scores[k])).length} of 2 final-stage matches played`;
+        }
+        document.querySelectorAll("#fixtures .score input").forEach((input) => input.addEventListener("input", onScore));
+        document.querySelectorAll("#fixtures .penalty-winner").forEach((input) => input.addEventListener("change", onScore));
+      }
       function onScore(e) {
         const el = e.target,
           key = el.dataset.key,
           side = el.dataset.team;
+        if (side === "winner") {
+          scores[key].winner = el.value;
+          document.querySelector("#saved").textContent = "Unsaved changes";
+          clearTimeout(saveTimer);
+          saveTimer = setTimeout(saveSharedScores, 500);
+          renderFixtures();
+          return;
+        }
         let v = el.value;
         if (v !== "" && (+v < 0 || +v > 99)) {
           el.value = Math.max(0, Math.min(99, +v));
@@ -670,11 +789,21 @@
         renderTable();
         const match = el.closest(".match");
         const complete = isPlayed(scores[key]);
+        if (current >= 10 && complete) {
+          renderFixtures();
+          return;
+        }
         match.querySelector(".status").textContent = complete
           ? "FULL TIME"
           : "UPCOMING";
-        document.querySelector("#matchCount").textContent =
-          `${rounds[current].filter((g) => isPlayed(scores[g.key])).length} of 3 matches played this matchday`;
+        if (current < 10) {
+          document.querySelector("#matchCount").textContent =
+            `${rounds[current].filter((g) => isPlayed(scores[g.key])).length} of 3 matches played this matchday`;
+        } else {
+          const currentMatch = el.closest(".match");
+          if (currentMatch) currentMatch.querySelector(".status").textContent = isPlayed(scores[key]) ? "FULL TIME" : "UPCOMING";
+          document.querySelector("#matchCount").textContent = "Score updated · open another stage to refresh the bracket";
+        }
       }
       async function getEditorKey() {
         let key = sessionStorage.getItem("shift-team-c-editor-key");
@@ -736,11 +865,11 @@
         show();
       });
       document.querySelector("#prev").onclick = () => {
-        current = (current + 9) % 10;
+        current = (current + 12) % 13;
         show();
       };
       document.querySelector("#next").onclick = () => {
-        current = (current + 1) % 10;
+        current = (current + 1) % 13;
         show();
       };
       document.querySelector("#reset").onclick = () => {

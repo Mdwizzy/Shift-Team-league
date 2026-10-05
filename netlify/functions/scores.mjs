@@ -40,13 +40,16 @@ export default async (request) => {
     return json({ error: "Invalid scores" }, 400);
 
   for (const [fixture, result] of Object.entries(scores)) {
-    if (!/^[A-Za-z]+\|[A-Za-z]+$/.test(fixture) || !result || typeof result !== "object")
+    if (!/^[A-Za-z0-9_-]+(?:\|[A-Za-z0-9_-]+)?$/.test(fixture) || !result || typeof result !== "object")
       return json({ error: "Invalid fixture" }, 400);
     for (const side of ["home", "away"]) {
       const value = result[side];
       if (typeof value !== "string" || (value !== "" && !/^\d{1,2}$/.test(value)))
         return json({ error: "Invalid score" }, 400);
     }
+    if (result.winner !== undefined && result.winner !== "" &&
+        !["Umar", "Vincent", "Adamu", "Azeez", "John", "Uche"].includes(result.winner))
+      return json({ error: "Invalid tie-break winner" }, 400);
   }
 
   await store.set(scoreKey, JSON.stringify(scores), { contentType: "application/json" });
