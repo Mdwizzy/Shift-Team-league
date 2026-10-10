@@ -2,7 +2,7 @@
 
 The league site uses Netlify Blobs for shared seasons, rosters, fixtures, scores, standings, and playoff results. Visitors can view every season; changes require an editor key.
 
-Add four or more teams to a new season; there is no configured maximum. Starting a season shuffles the roster and generates a double round-robin schedule, including byes when needed. With 4–6 teams, the top four go directly to two-leg semifinals. With 7–8 teams, the top eight play two-leg quarterfinals (a 7-team bracket gives the top seed a bye); with more than eight, the top eight qualify and the rest are eliminated. Quarterfinal and semifinal aggregate draws go to penalties. The semifinal winners play the final for champion and runner-up; the semifinal losers play for third place. Older seasons stay in the season picker as read-only archives.
+Add four or more teams to a new season; there is no configured maximum. Starting a season shuffles the roster and generates a double round-robin schedule, including byes when needed. With 4–6 teams, the top four go directly to two-leg semifinals. With exactly 8 teams, the top six are seeded into Group A (1st, 4th, 5th) and Group B (2nd, 3rd, 6th); each group plays a round robin over three navigable matchdays, and each group’s top two cross over in two-leg semifinals. With 7 teams or more than 8, the top eight use two-leg quarterfinals (a 7-team bracket gives the top seed a bye). Quarterfinal and semifinal aggregate draws go to penalties. The semifinal winners play the final for champion and runner-up; the semifinal losers play for third place. Older seasons stay in the season picker as read-only archives.
 
 ## Deploy on Netlify
 
