@@ -625,6 +625,7 @@
             id="seasonSelect"
             aria-label="Choose season"
           ></select
+          ><button class="btn hidden" id="switchToGroups">Use top-six groups</button
           ><button class="btn" id="newSeason">＋ New season</button>
         </div>
       </header>
@@ -742,6 +743,35 @@
       }
       function canEditScores(season) {
         return isActive(season) || season?.status === "archived";
+      }
+      function canSwitchToGroups(season) {
+        if (
+          !isActive(season) ||
+          season.teams.length !== 8 ||
+          usesGroups(season) ||
+          season.status === "setup" ||
+          season.status === "complete"
+        )
+          return false;
+        const knockoutKeys = [
+          "group-md1-a",
+          "group-md1-b",
+          "group-md2-a",
+          "group-md2-b",
+          "group-md3-a",
+          "group-md3-b",
+          ...Array.from({ length: 4 }, (_, i) => [
+            `qf${i + 1}-leg1`,
+            `qf${i + 1}-leg2`,
+          ]).flat(),
+          "semi1-leg1",
+          "semi1-leg2",
+          "semi2-leg1",
+          "semi2-leg2",
+          "final",
+          "third-place",
+        ];
+        return knockoutKeys.every((key) => !isPlayed(season.scores[key]));
       }
       function isPlayed(s) {
         return (
@@ -1193,6 +1223,11 @@
           .join("");
         if (current) el.value = current.id;
         $("#newSeason").disabled = !activeSeason();
+        $("#switchToGroups").classList.toggle(
+          "hidden",
+          current?.id !== state.activeSeasonId ||
+            !canSwitchToGroups(activeSeason()),
+        );
       }
       function renderSetup(season) {
         const active = isActive(season) && season.status === "setup";
@@ -1710,6 +1745,29 @@
         render();
         persist();
       }
+      function switchActiveSeasonToGroups() {
+        const season = activeSeason();
+        if (!canSwitchToGroups(season)) return;
+        if (
+          !confirm(
+            `Switch ${season.name} to the top-six group format? All league scores will be kept. Season 1 and other archived seasons will not be changed.`,
+          )
+        )
+          return;
+        season.knockoutFormat = "groups";
+        [
+          "group-md1-a",
+          "group-md1-b",
+          "group-md2-a",
+          "group-md2-b",
+          "group-md3-a",
+          "group-md3-b",
+        ].forEach((key) => (season.scores[key] ??= blankScore()));
+        viewingSeasonId = season.id;
+        stageValue = leagueDone(season) ? "group-1" : "league-0";
+        render();
+        persist();
+      }
       function addTeam() {
         const season = activeSeason(),
           input = $("#teamInput"),
@@ -1759,6 +1817,7 @@
           startSeason(season);
       };
       $("#newSeason").onclick = addNewSeason;
+      $("#switchToGroups").onclick = switchActiveSeasonToGroups;
       $("#seasonSelect").onchange = (e) => {
         viewingSeasonId = e.target.value;
         stageValue = "league-0";

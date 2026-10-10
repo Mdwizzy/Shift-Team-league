@@ -2,7 +2,7 @@
 
 The league table uses Netlify Blobs for shared results. Visitors can read the table; score edits and resets require an editor key.
 
-The bottom two teams are eliminated after the league. The top four qualify for semifinals (1st vs 4th and 2nd vs 3rd), played over two legs. Aggregate draws are decided by the penalty-winner selector. The semifinal winners play the final for champion and runner-up; the semifinal losers play for third place.
+The bottom two teams are eliminated after the league. The top four qualify for semifinals (1st vs 4th and 2nd vs 3rd), played over two legs. Aggregate draws are decided by the penalty-winner selector. The semifinal winners play the final for champion and runner-up; the semifinal losers play for third place. New eight-team seasons use the top-six group format. If an active eight-team season has not started its knockout matches, an editor can use **Use top-six groups** to switch its format without clearing league scores. The change applies only to the active season; archived seasons are not modified.
 
 ## Deploy on Netlify
 
