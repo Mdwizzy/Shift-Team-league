@@ -1,944 +1,125 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Shift Team C — League</title>
-    <style>
-      :root {
-        --bg: #101413;
-        --panel: #191f1d;
-        --panel2: #202825;
-        --line: #303a36;
-        --text: #f2f5f3;
-        --muted: #9ba9a2;
-        --green: #b9f36b;
-        --green2: #25381d;
-        --orange: #ffb86b;
-        --red: #ff817e;
-        font:
-          15px/1.45 Inter,
-          ui-sans-serif,
-          system-ui,
-          -apple-system,
-          "Segoe UI",
-          sans-serif;
-        color: var(--text);
-        background: var(--bg);
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        background:
-          radial-gradient(ellipse at 90% -10%, #283a2b 0, transparent 32%),
-          var(--bg);
-        min-height: 100vh;
-      }
-      .app {
-        max-width: 1120px;
-        margin: auto;
-        padding: 36px 26px 60px;
-      }
-      .eyebrow {
-        display: flex;
-        gap: 9px;
-        align-items: center;
-        color: var(--green);
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-      }
-      .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--green);
-        box-shadow: 0 0 15px #b9f36b88;
-      }
-      header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        margin: 22px 0 28px;
-        gap: 18px;
-      }
-      h1 {
-        font-size: clamp(36px, 6vw, 62px);
-        line-height: 0.98;
-        letter-spacing: -0.055em;
-        margin: 8px 0 12px;
-      }
-      .sub {
-        color: var(--muted);
-        margin: 0;
-      }
-      .season {
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 9px 14px;
-        color: #ced6d1;
-        font-size: 12px;
-        white-space: nowrap;
-      }
-      .layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1.15fr) minmax(330px, 0.85fr);
-        gap: 18px;
-      }
-      .card {
-        background: linear-gradient(145deg, #1b211f, #171c1a);
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        overflow: hidden;
-        box-shadow: 0 16px 40px #0002;
-      }
-      .card-head {
-        padding: 20px 22px 14px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-      }
-      .card h2 {
-        margin: 0;
-        font-size: 16px;
-        letter-spacing: -0.02em;
-      }
-      .hint {
-        color: var(--muted);
-        font-size: 12px;
-        margin-top: 4px;
-      }
-      .table-wrap {
-        overflow-x: auto;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        white-space: nowrap;
-      }
-      th {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.11em;
-        color: #829087;
-        font-weight: 800;
-        text-align: right;
-        padding: 11px 10px;
-        border-bottom: 1px solid var(--line);
-      }
-      th:first-child,
-      td:first-child {
-        text-align: left;
-        padding-left: 22px;
-      }
-      th:nth-child(2),
-      td:nth-child(2) {
-        text-align: left;
-      }
-      td {
-        padding: 14px 10px;
-        border-bottom: 1px solid #ffffff0b;
-        text-align: right;
-        font-variant-numeric: tabular-nums;
-        color: #dbe2de;
-      }
-      tbody tr:last-child td {
-        border-bottom: 0;
-      }
-      .rank {
-        width: 32px;
-        color: var(--muted);
-        font-size: 12px;
-      }
-      .team-cell {
-        font-weight: 750;
-        color: #f1f5f2;
-      }
-      .points {
-        color: var(--green);
-        font-weight: 850;
-      }
-      .form-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 20px;
-        height: 20px;
-        border-radius: 6px;
-        font-size: 10px;
-        font-weight: 900;
-      }
-      .form-w {
-        color: var(--green);
-        background: #b9f36b18;
-      }
-      .form-d {
-        color: #d3ded8;
-        background: #ffffff12;
-      }
-      .form-l {
-        color: var(--red);
-        background: #ff817e18;
-      }
-      .table-foot {
-        padding: 12px 22px;
-        border-top: 1px solid var(--line);
-        font-size: 11px;
-        color: var(--muted);
-      }
-      .controls {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .select {
-        appearance: none;
-        color: var(--text);
-        background: var(--panel2);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 9px 34px 9px 12px;
-        font: inherit;
-        font-weight: 700;
-        cursor: pointer;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%239ba9a2' stroke-width='2' viewBox='0 0 12 12'%3E%3Cpath d='m2 4 4 4 4-4'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 12px center;
-      }
-      .nav {
-        width: 36px;
-        height: 36px;
-        background: var(--panel2);
-        border: 1px solid var(--line);
-        color: var(--text);
-        border-radius: 10px;
-        font-size: 18px;
-        cursor: pointer;
-      }
-      .nav:hover,
-      .select:hover {
-        border-color: #65766c;
-      }
-      .fixtures {
-        padding: 4px 16px 12px;
-      }
-      .match {
-        display: grid;
-        grid-template-columns: 1fr 92px 1fr;
-        align-items: center;
-        gap: 10px;
-        padding: 14px 6px;
-        border-bottom: 1px solid #ffffff0b;
-      }
-      .match:last-child {
-        border: 0;
-      }
-      .side {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        font-weight: 700;
-      }
-      .side.away {
-        justify-content: flex-end;
-      }
-      .crest {
-        height: 29px;
-        width: 29px;
-        border-radius: 9px;
-        background: #29342e;
-        color: var(--green);
-        display: grid;
-        place-items: center;
-        font-size: 10px;
-        font-weight: 900;
-      }
-      .away .crest {
-        order: 2;
-      }
-      .score {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-      }
-      .score input {
-        width: 34px;
-        height: 34px;
-        padding: 0;
-        text-align: center;
-        background: #111614;
-        border: 1px solid var(--line);
-        border-radius: 9px;
-        color: var(--text);
-        font-size: 16px;
-        font-weight: 800;
-        outline: none;
-      }
-      .score input:focus {
-        border-color: var(--green);
-        box-shadow: 0 0 0 2px #b9f36b22;
-      }
-      .score input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-      }
-      .dash {
-        color: #728078;
-        font-weight: 700;
-      }
-      .empty-score {
-        color: #758179;
-        font-size: 13px;
-      }
-      .status {
-        font-size: 10px;
-        color: #758179;
-        text-align: center;
-        margin-top: 4px;
-        min-height: 14px;
-      }
-      .stage-note {
-        margin: 8px 6px 2px;
-        padding: 13px 14px;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        background: #ffffff05;
-        color: var(--muted);
-        font-size: 12px;
-        line-height: 1.6;
-      }
-      .stage-note strong { color: var(--text); font-size: 13px; }
-      .tie-break { margin-top: 7px; display: grid; gap: 5px; justify-items: center; }
-      .tie-break label { color: var(--orange); font-size: 9px; text-align: center; }
-      .penalty-winner { padding: 6px 26px 6px 8px; font-size: 11px; }
-      .podium {
-        position: relative;
-        overflow: hidden;
-        margin: 9px 4px 14px;
-        padding: 20px 16px 16px;
-        border: 1px solid #667951;
-        border-radius: 18px;
-        background: radial-gradient(ellipse at 50% -25%, #b9f36b33, transparent 56%), linear-gradient(145deg, #253126, #171e1b 75%);
-        box-shadow: 0 14px 34px #0004, inset 0 1px #ffffff10;
-      }
-      .podium-head { text-align: center; margin-bottom: 16px; }
-      .podium-kicker { color: var(--green); font-size: 9px; font-weight: 900; letter-spacing: .2em; text-transform: uppercase; }
-      .podium-title { margin-top: 4px; font-size: 20px; font-weight: 850; letter-spacing: -.04em; }
-      .podium-grid { display: grid; grid-template-columns: 1fr 1.1fr 1fr; align-items: end; gap: 9px; max-width: 530px; margin: auto; }
-      .podium-place { min-width: 0; text-align: center; padding: 13px 8px 12px; border: 1px solid #ffffff12; border-radius: 14px 14px 10px 10px; background: #ffffff08; }
-      .podium-place.champion { padding-top: 19px; padding-bottom: 17px; border-color: #d4b85a99; background: linear-gradient(160deg, #76602a55, #ffffff09 75%); box-shadow: 0 0 24px #e8c45a16; }
-      .podium-medal { font-size: 22px; line-height: 1; margin-bottom: 8px; }
-      .podium-label { color: #aab7af; font-size: 9px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
-      .champion .podium-label { color: #f1d77f; }
-      .podium-name { overflow-wrap: anywhere; margin-top: 5px; font-size: clamp(13px, 2vw, 18px); font-weight: 850; letter-spacing: -.025em; }
-      .podium-name.pending { color: #89968e; font-size: 12px; font-weight: 600; }
-      .bottom {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 13px 22px;
-        border-top: 1px solid var(--line);
-        gap: 10px;
-      }
-      .saved {
-        font-size: 11px;
-        color: var(--muted);
-      }
-      .actions {
-        display: flex;
-        gap: 8px;
-      }
-      .btn {
-        border: 1px solid var(--line);
-        background: transparent;
-        color: #dce3de;
-        padding: 8px 11px;
-        border-radius: 9px;
-        font: 700 11px inherit;
-        cursor: pointer;
-      }
-      .btn:hover {
-        border-color: #74867a;
-      }
-      .btn.primary {
-        border-color: var(--green);
-        background: var(--green);
-        color: #182111;
-      }
-      .legend {
-        display: flex;
-        gap: 14px;
-        font-size: 10px;
-        color: var(--muted);
-      }
-      .legend span {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-      }
-      .legend i {
-        height: 7px;
-        width: 7px;
-        border-radius: 2px;
-        background: var(--green);
-      }
-      .legend span:nth-child(2) i {
-        background: #77897d;
-      }
-      .legend span:nth-child(3) i {
-        background: var(--orange);
-      }
-      .toast {
-        position: fixed;
-        bottom: 22px;
-        left: 50%;
-        transform: translate(-50%, 20px);
-        opacity: 0;
-        padding: 10px 15px;
-        border-radius: 11px;
-        background: #e8f4e9;
-        color: #162218;
-        font-size: 13px;
-        font-weight: 700;
-        transition: 0.2s;
-        pointer-events: none;
-      }
-      .toast.show {
-        transform: translate(-50%, 0);
-        opacity: 1;
-      }
-      .mobile-summary {
-        display: none;
-      }
-      @media (max-width: 780px) {
-        .app {
-          padding: 24px 16px 40px;
-        }
-        .layout {
-          grid-template-columns: 1fr;
-        }
-        header {
-          align-items: flex-start;
-        }
-        .season {
-          margin-top: 6px;
-        }
-        .standings-card {
-          order: 0;
-        }
-        .fixtures-card {
-          order: 1;
-        }
-        .match {
-          grid-template-columns: 1fr 82px 1fr;
-        }
-        .side {
-          font-size: 13px;
-        }
-        .crest {
-          flex: none;
-        }
-        .legend {
-          gap: 9px;
-        }
-      }
-      @media (max-width: 420px) {
-        .season {
-          display: none;
-        }
-        .card-head {
-          padding: 17px 16px 12px;
-        }
-        th:first-child,
-        td:first-child {
-          padding-left: 14px;
-        }
-        th,
-        td {
-          padding-left: 7px;
-          padding-right: 7px;
-        }
-        .match {
-          gap: 5px;
-          padding-left: 0;
-          padding-right: 0;
-        }
-        .side {
-          gap: 5px;
-          font-size: 12px;
-        }
-        .crest {
-          width: 24px;
-          height: 24px;
-        }
-        .score input {
-          width: 30px;
-          height: 32px;
-        }
-        .bottom,
-        .table-foot {
-          padding-left: 16px;
-          padding-right: 16px;
-        }
-        .controls {
-          gap: 5px;
-        }
-        .select {
-          padding-left: 9px;
-          padding-right: 28px;
-          font-size: 13px;
-        }
-        .podium { margin-left: 0; margin-right: 0; padding: 17px 9px 11px; }
-        .podium-grid { gap: 5px; }
-        .podium-place { padding: 11px 4px 10px; }
-        .podium-place.champion { padding-top: 16px; padding-bottom: 14px; }
-        .podium-label { font-size: 8px; letter-spacing: .08em; }
-      }
-    </style>
-  </head>
-  <body>
-    <main class="app">
-      <div class="eyebrow">
-        <span class="dot"></span> Community football · Season 01
-      </div>
-      <header>
-        <div>
-          <h1>Shift Team C<br />League</h1>
-          <p class="sub">30 league matches · two-leg semifinals · final & third place</p>
-        </div>
-        <div class="season">DOUBLE ROUND ROBIN&nbsp; · &nbsp;30 MATCHES</div>
-      </header>
-      <div class="layout">
-        <section class="card standings-card">
-          <div class="card-head">
-            <div>
-              <h2>League table</h2>
-              <div class="hint">Ranked by points, then goal difference</div>
-            </div>
-            <div class="legend">
-              <span><i></i>W</span><span><i></i>D</span><span><i></i>L</span>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Team</th>
-                  <th>MP</th>
-                  <th>W</th>
-                  <th>D</th>
-                  <th>L</th>
-                  <th>GD</th>
-                  <th>Pts</th>
-                </tr>
-              </thead>
-              <tbody id="standings"></tbody>
-            </table>
-          </div>
-          <div class="table-foot">Bottom two are eliminated after the league · 3 points for a win · 1 for a draw</div>
-        </section>
-        <section class="card fixtures-card">
-          <div class="card-head">
-            <div>
-              <h2>Fixtures & results</h2>
-              <div class="hint" id="matchCount">
-                Enter scores to update the table
-              </div>
-            </div>
-            <div class="controls">
-              <button class="nav" id="prev" aria-label="Previous matchday">
-                ‹</button
-              ><select
-                class="select"
-                id="roundSelect"
-                aria-label="Choose matchday"
-              ></select
-              ><button class="nav" id="next" aria-label="Next matchday">
-                ›
-              </button>
-            </div>
-          </div>
-          <div class="fixtures" id="fixtures"></div>
-          <div class="bottom">
-            <div class="saved" id="saved">Loading shared scores…</div>
-            <div class="actions">
-              <button class="btn" id="reset">Reset scores</button
-              ><button class="btn primary" id="share">Copy table</button>
-            </div>
-          </div>
-        </section>
-      </div>
-      <div class="toast" id="toast"></div>
-    </main>
-    <script>
-      const teams = ["Umar", "Vincent", "Adamu", "Azeez", "John", "Uche"];
-      // Circle schedule with the requested Matchday 1 pairings.
-      const slots = ["Vincent", "John", "Uche", "Umar", "Adamu", "Azeez"];
-      const rounds = [];
-      let rotation = [...slots];
-      for (let r = 0; r < 5; r++) {
-        const games = [];
-        for (let i = 0; i < 3; i++) {
-          const a = rotation[i],
-            b = rotation[5 - i];
-          games.push({ home: a, away: b, key: `${a}|${b}` });
-        }
-        rounds.push(games);
-        rotation = [rotation[0], rotation[5], ...rotation.slice(1, 5)];
-      }
-      const firstLeg = [...rounds];
-      firstLeg.forEach((games) =>
-        rounds.push(
-          games.map((g) => ({ home: g.away, away: g.home, key: `${g.away}|${g.home}` })),
-        ),
-      );
-      const initial = {};
-      rounds.flat().forEach((g) => (initial[g.key] = { home: "", away: "", winner: "" }));
-      ["semi1-leg1", "semi1-leg2", "semi2-leg1", "semi2-leg2", "final", "third-place"].forEach(
-        (key) => (initial[key] = { home: "", away: "", winner: "" }),
-      );
-      let scores = structuredClone(initial);
-      let saveTimer;
-      let saveQueue = Promise.resolve();
-      const apiUrl = "/.netlify/functions/scores";
-      for (const k of Object.keys(initial))
-        if (!scores[k]) scores[k] = { ...initial[k] };
-      const select = document.querySelector("#roundSelect");
-      rounds.forEach((_, i) => {
-        const o = document.createElement("option");
-        o.value = i;
-        o.textContent = `Matchday ${i + 1}`;
-        select.appendChild(o);
-      });
-      ["Semifinals · 1st leg", "Semifinals · 2nd leg", "Final & 3rd place"].forEach(
-        (label, i) => {
-          const o = document.createElement("option");
-          o.value = 10 + i;
-          o.textContent = label;
-          select.appendChild(o);
-        },
-      );
-      let current = 0;
-      const isPlayed = (s) =>
-        s.home !== "" &&
-        s.away !== "" &&
-        Number.isFinite(+s.home) &&
-        Number.isFinite(+s.away);
-      function tableData() {
-        const d = Object.fromEntries(
-          teams.map((t) => [
-            t,
-            { team: t, mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, form: [] },
-          ]),
-        );
-        rounds.forEach((games) =>
-          games.forEach((g) => {
-            const s = scores[g.key];
-            if (!isPlayed(s)) return;
-            const h = +s.home,
-              a = +s.away,
-              H = d[g.home],
-              A = d[g.away];
-            H.mp++;
-            A.mp++;
-            H.gf += h;
-            H.ga += a;
-            A.gf += a;
-            A.ga += h;
-            if (h > a) {
-              H.w++;
-              A.l++;
-              H.form.push("W");
-              A.form.push("L");
-            } else if (h < a) {
-              A.w++;
-              H.l++;
-              A.form.push("W");
-              H.form.push("L");
-            } else {
-              H.d++;
-              A.d++;
-              H.form.push("D");
-              A.form.push("D");
-            }
-          }),
-        );
-        return Object.values(d)
-          .map((x) => ({ ...x, gd: x.gf - x.ga, pts: x.w * 3 + x.d }))
-          .sort(
-            (a, b) =>
-              b.pts - a.pts ||
-              b.gd - a.gd ||
-              b.gf - a.gf ||
-              a.team.localeCompare(b.team),
-          );
-      }
-      function renderTable() {
-        const data = tableData();
-        document.querySelector("#standings").innerHTML = data
-          .map(
-            (t, i) =>
-              `<tr><td class="rank">${String(i + 1).padStart(2, "0")}</td><td class="team-cell">${t.team}</td><td>${t.mp}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td><td>${t.gd > 0 ? "+" : ""}${t.gd}</td><td class="points">${t.pts}</td></tr>`,
-          )
-          .join("");
-      }
-      function renderFixtures() {
-        if (current >= 10) {
-          renderPlayoffs();
-          return;
-        }
-        const games = rounds[current];
-        document.querySelector("#fixtures").innerHTML = games
-          .map((g) => {
-            const s = scores[g.key],
-              played = isPlayed(s);
-            return `<div class="match"><div class="side"><span class="crest">${g.home.slice(0, 2).toUpperCase()}</span><span>${g.home}</span></div><div><div class="score"><input inputmode="numeric" type="number" min="0" max="99" aria-label="${g.home} goals" data-team="home" data-key="${g.key}" value="${s.home}" placeholder="–"><span class="dash">:</span><input inputmode="numeric" type="number" min="0" max="99" aria-label="${g.away} goals" data-team="away" data-key="${g.key}" value="${s.away}" placeholder="–"></div><div class="status">${played ? "FULL TIME" : "UPCOMING"}</div></div><div class="side away"><span>${g.away}</span><span class="crest">${g.away.slice(0, 2).toUpperCase()}</span></div></div>`;
-          })
-          .join("");
-        const done = games.filter((g) => isPlayed(scores[g.key])).length;
-        document.querySelector("#matchCount").textContent =
-          `${done} of 3 matches played this matchday`;
-        document
-          .querySelectorAll(".score input")
-          .forEach((input) => input.addEventListener("input", onScore));
-      }
-
-      function leagueComplete() {
-        return rounds.flat().every((g) => isPlayed(scores[g.key]));
-      }
-      function semifinalTeams() {
-        return leagueComplete() ? tableData().slice(0, 4).map((x) => x.team) : null;
-      }
-      function legPair(seedTop, seedBottom, key, secondLeg = false) {
-        return secondLeg
-          ? { home: seedTop, away: seedBottom, key }
-          : { home: seedBottom, away: seedTop, key };
-      }
-      function twoLegResult(top, bottom, key1, key2) {
-        const first = scores[key1], second = scores[key2];
-        if (!isPlayed(first) || !isPlayed(second)) return { winner: null, loser: null, tied: false };
-        const topGoals = +first.away + +second.home;
-        const bottomGoals = +first.home + +second.away;
-        if (topGoals > bottomGoals) return { winner: top, loser: bottom, tied: false };
-        if (bottomGoals > topGoals) return { winner: bottom, loser: top, tied: false };
-        const decision = second.winner;
-        return { winner: [top, bottom].includes(decision) ? decision : null, loser: [top, bottom].includes(decision) ? (decision === top ? bottom : top) : null, tied: true };
-      }
-      function playoffMatch(match, penaltyTeams = []) {
-        const s = scores[match.key] || { home: "", away: "", winner: "" };
-        const played = isPlayed(s);
-        const penaltyNeeded = penaltyTeams.length === 2 && played && +s.home === +s.away;
-        const penalty = penaltyNeeded
-          ? `<div class="tie-break"><label for="winner-${match.key}">Level on aggregate · winner on penalties</label><select class="select penalty-winner" id="winner-${match.key}" data-key="${match.key}" data-team="winner"><option value="">Choose winner</option>${penaltyTeams.map((team) => `<option value="${team}" ${s.winner === team ? "selected" : ""}>${team}</option>`).join("")}</select></div>`
-          : "";
-        return `<div class="match" data-match-key="${match.key}"><div class="side"><span class="crest">${match.home.slice(0, 2).toUpperCase()}</span><span>${match.home}</span></div><div><div class="score"><input inputmode="numeric" type="number" min="0" max="99" aria-label="${match.home} goals" data-team="home" data-key="${match.key}" value="${s.home}" placeholder="–"><span class="dash">:</span><input inputmode="numeric" type="number" min="0" max="99" aria-label="${match.away} goals" data-team="away" data-key="${match.key}" value="${s.away}" placeholder="–"></div><div class="status">${played ? "FULL TIME" : "UPCOMING"}</div>${penalty}</div><div class="side away"><span>${match.away}</span><span class="crest">${match.away.slice(0, 2).toUpperCase()}</span></div></div>`;
-      }
-      function matchWinner(key, home, away) {
-        const result = scores[key];
-        if (!isPlayed(result)) return null;
-        if (+result.home > +result.away) return home;
-        if (+result.away > +result.home) return away;
-        return [home, away].includes(result.winner) ? result.winner : null;
-      }
-      function renderPlayoffs() {
-        const seeds = semifinalTeams();
-        const fixtures = document.querySelector("#fixtures");
-        if (!seeds) {
-          fixtures.innerHTML = `<div class="stage-note"><strong>League stage in progress</strong><br>Finish all 30 league matches to confirm the top four. Teams in 5th and 6th are eliminated.</div>`;
-          document.querySelector("#matchCount").textContent = "Top four advance to the semifinals";
-          return;
-        }
-        const [first, second, third, fourth] = seeds;
-        if (current === 10 || current === 11) {
-          const isSecond = current === 11;
-          const games = [
-            legPair(first, fourth, isSecond ? "semi1-leg2" : "semi1-leg1", isSecond),
-            legPair(second, third, isSecond ? "semi2-leg2" : "semi2-leg1", isSecond),
-          ];
-          const t1 = twoLegResult(first, fourth, "semi1-leg1", "semi1-leg2");
-          const t2 = twoLegResult(second, third, "semi2-leg1", "semi2-leg2");
-          const tie1 = isSecond && t1.tied ? [first, fourth] : [];
-          const tie2 = isSecond && t2.tied ? [second, third] : [];
-          fixtures.innerHTML = `<div class="stage-note"><strong>Semifinals · ${isSecond ? "Second leg" : "First leg"}</strong><br>Seed 1 (${first}) vs seed 4 (${fourth}) · Seed 2 (${second}) vs seed 3 (${third})</div>${playoffMatch(games[0], tie1)}${playoffMatch(games[1], tie2)}<div class="table-foot">Two legs per tie. Aggregate score decides; tied aggregates go to penalties.</div>`;
-          const complete = games.filter((g) => isPlayed(scores[g.key])).length;
-          document.querySelector("#matchCount").textContent = `${complete} of 2 semifinal matches played this leg`;
-        } else {
-          const s1 = twoLegResult(first, fourth, "semi1-leg1", "semi1-leg2");
-          const s2 = twoLegResult(second, third, "semi2-leg1", "semi2-leg2");
-          if (!s1.winner || !s2.winner) {
-            fixtures.innerHTML = `<div class="stage-note"><strong>Final stage awaits the semifinals</strong><br>Complete both two-leg semifinal ties${s1.tied || s2.tied ? " and enter the penalty winners" : ""} to set the final and third-place match.</div>`;
-            document.querySelector("#matchCount").textContent = "Semifinal results determine the finalists";
-            return;
-          }
-          const final = { home: s1.winner, away: s2.winner, key: "final" };
-          const thirdPlace = { home: s1.loser, away: s2.loser, key: "third-place" };
-          const finals = [
-            playoffMatch(final, [final.home, final.away]),
-            playoffMatch(thirdPlace, [thirdPlace.home, thirdPlace.away]),
-          ];
-          const champion = matchWinner("final", final.home, final.away);
-          const runnerUp = champion ? (champion === final.home ? final.away : final.home) : null;
-          const bronze = matchWinner("third-place", thirdPlace.home, thirdPlace.away);
-          const complete = Boolean(champion && bronze);
-          const podiumCard = (place, label, team, medal, extra = "") =>
-            `<div class="podium-place ${extra}"><div class="podium-medal">${medal}</div><div class="podium-label">${label}</div><div class="podium-name ${team ? "" : "pending"}">${team || "Awaiting result"}</div></div>`;
-          const podium = `<div class="podium"><div class="podium-head"><div class="podium-kicker">Shift Team C · Final standings</div><div class="podium-title">${complete ? "The podium is set" : "Who will take the podium?"}</div></div><div class="podium-grid">${podiumCard("2", "Runner-up", runnerUp, "🥈")}${podiumCard("1", "Champion", champion, "🏆", "champion")}${podiumCard("3", "Third place", bronze, "🥉")}</div></div>`;
-          fixtures.innerHTML = `${podium}${finals.join("")}<div class="table-foot">The final decides champion and runner-up; the playoff decides third place.</div>`;
-          document.querySelector("#matchCount").textContent = `${["final", "third-place"].filter((k) => isPlayed(scores[k])).length} of 2 final-stage matches played`;
-        }
-        document.querySelectorAll("#fixtures .score input").forEach((input) => input.addEventListener("input", onScore));
-        document.querySelectorAll("#fixtures .penalty-winner").forEach((input) => input.addEventListener("change", onScore));
-      }
-      function onScore(e) {
-        const el = e.target,
-          key = el.dataset.key,
-          side = el.dataset.team;
-        if (side === "winner") {
-          scores[key].winner = el.value;
-          document.querySelector("#saved").textContent = "Unsaved changes";
-          clearTimeout(saveTimer);
-          saveTimer = setTimeout(saveSharedScores, 500);
-          renderFixtures();
-          return;
-        }
-        let v = el.value;
-        if (v !== "" && (+v < 0 || +v > 99)) {
-          el.value = Math.max(0, Math.min(99, +v));
-          v = el.value;
-        }
-        scores[key][side] = v;
-        document.querySelector("#saved").textContent = "Unsaved changes";
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(saveSharedScores, 500);
-        renderTable();
-        const match = el.closest(".match");
-        const complete = isPlayed(scores[key]);
-        if (current >= 10 && complete) {
-          renderFixtures();
-          return;
-        }
-        match.querySelector(".status").textContent = complete
-          ? "FULL TIME"
-          : "UPCOMING";
-        if (current < 10) {
-          document.querySelector("#matchCount").textContent =
-            `${rounds[current].filter((g) => isPlayed(scores[g.key])).length} of 3 matches played this matchday`;
-        } else {
-          const currentMatch = el.closest(".match");
-          if (currentMatch) currentMatch.querySelector(".status").textContent = isPlayed(scores[key]) ? "FULL TIME" : "UPCOMING";
-          document.querySelector("#matchCount").textContent = "Score updated · open another stage to refresh the bracket";
-        }
-      }
-      async function getEditorKey() {
-        let key = sessionStorage.getItem("shift-team-c-editor-key");
-        if (!key) {
-          key = prompt("Enter the league editor key to save this score:");
-          if (!key) return null;
-          sessionStorage.setItem("shift-team-c-editor-key", key);
-        }
-        return key;
-      }
-      async function saveSharedScores() {
-        const key = await getEditorKey();
-        if (!key) {
-          document.querySelector("#saved").textContent = "Score not shared";
-          await loadSharedScores();
-          return;
-        }
-        const snapshot = JSON.stringify(scores);
-        saveQueue = saveQueue.then(async () => {
-          const response = await fetch(apiUrl, {
-            method: "PUT",
-            headers: { "content-type": "application/json", "x-league-key": key },
-            body: snapshot,
-          });
-          if (response.status === 401) {
-            sessionStorage.removeItem("shift-team-c-editor-key");
-            document.querySelector("#saved").textContent = "Editor key rejected";
-            await loadSharedScores();
-            return;
-          }
-          if (!response.ok) throw new Error("Save failed");
-          document.querySelector("#saved").textContent = "Shared with everyone · saved";
-        }).catch(() => {
-          document.querySelector("#saved").textContent = "Could not save shared scores";
-        });
-        await saveQueue;
-      }
-      async function loadSharedScores() {
-        try {
-          const response = await fetch(apiUrl, { cache: "no-store" });
-          if (!response.ok) throw new Error("Load failed");
-          const shared = await response.json();
-          if (document.querySelector("#fixtures input:focus")) return;
-          for (const k of Object.keys(initial))
-            scores[k] = shared[k] || { ...initial[k] };
-          renderTable();
-          if (!document.querySelector("#fixtures input:focus")) renderFixtures();
-          document.querySelector("#saved").textContent = "Shared league scores · live";
-        } catch {
-          document.querySelector("#saved").textContent = "Could not load shared scores";
-        }
-      }
-      function show() {
-        select.value = current;
-        renderFixtures();
-      }
-      select.addEventListener("change", () => {
-        current = +select.value;
-        show();
-      });
-      document.querySelector("#prev").onclick = () => {
-        current = (current + 12) % 13;
-        show();
-      };
-      document.querySelector("#next").onclick = () => {
-        current = (current + 1) % 13;
-        show();
-      };
-      document.querySelector("#reset").onclick = () => {
-        if (!confirm("Clear every entered score and reset the league table?"))
-          return;
-        scores = structuredClone(initial);
-        renderTable();
-        show();
-        saveSharedScores();
-      };
-      document.querySelector("#share").onclick = async () => {
-        const rows = tableData(),
-          text = [
-            "#  TEAM       MP  W  D  L  GD  PTS",
-            ...rows.map(
-              (t, i) =>
-                `${i + 1}. ${t.team.padEnd(9)} ${String(t.mp).padStart(2)}  ${t.w}  ${t.d}  ${t.l}  ${(t.gd > 0 ? "+" : "") + t.gd}  ${t.pts}`,
-            ),
-          ].join("\n");
-        try {
-          await navigator.clipboard.writeText(text);
-          toast("League table copied to clipboard");
-        } catch {
-          toast("Clipboard access unavailable");
-        }
-      };
-      let toastTimer;
-      function toast(msg) {
-        const t = document.querySelector("#toast");
-        t.textContent = msg;
-        t.classList.add("show");
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => t.classList.remove("show"), 2000);
-      }
-      loadSharedScores();
-      renderTable();
-      show();
-      setInterval(loadSharedScores, 20000);
-    </script>
-  </body>
-</html>
-
-
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101413"><title>Shift Team C — League</title>
+<style>
+:root{--bg:#101413;--panel:#191f1d;--panel2:#202825;--line:#303a36;--text:#f2f5f3;--muted:#9ba9a2;--green:#b9f36b;--orange:#ffb86b;--red:#ff817e;font:15px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);background:var(--bg)}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 90% -10%,#283a2b 0,transparent 32%),var(--bg)}button,input,select{font:inherit}.app{max-width:1160px;margin:auto;padding:34px 24px 56px}.eyebrow{display:flex;align-items:center;gap:9px;color:var(--green);font-size:11px;font-weight:900;letter-spacing:.15em;text-transform:uppercase}.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 14px #b9f36b88}header{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin:19px 0 26px}h1{margin:7px 0 10px;font-size:clamp(34px,6vw,56px);line-height:.98;letter-spacing:-.055em}.subtitle{margin:0;color:var(--muted)}.season-bar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}.select,.field{appearance:none;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;outline:none}.select:focus,.field:focus{border-color:var(--green)}.season-select{font-weight:750}.btn{border:1px solid var(--line);background:transparent;color:#dce3de;padding:9px 12px;border-radius:10px;font-weight:750;cursor:pointer}.btn:hover{border-color:#74867a}.btn.primary{border-color:var(--green);background:var(--green);color:#182111}.btn:disabled{opacity:.45;cursor:not-allowed}.layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(340px,.9fr);gap:17px}.card{background:linear-gradient(145deg,#1b211f,#171c1a);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 16px 40px #0002}.card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:19px 21px 14px}.card h2{margin:0;font-size:16px;letter-spacing:-.02em}.hint{margin-top:4px;color:var(--muted);font-size:12px}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}th{padding:10px 9px;border-bottom:1px solid var(--line);color:#829087;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.1em}th:first-child,td:first-child{text-align:left;padding-left:20px}th:nth-child(2),td:nth-child(2){text-align:left}td{padding:12px 9px;border-bottom:1px solid #ffffff0b;text-align:right;color:#dbe2de;font-variant-numeric:tabular-nums}tr:last-child td{border-bottom:0}.rank{color:var(--muted);font-size:12px}.team-name{font-weight:750}.pts{color:var(--green);font-weight:850}.table-foot{padding:12px 20px;border-top:1px solid var(--line);color:var(--muted);font-size:11px}.controls{display:flex;align-items:center;gap:7px}.nav{width:35px;height:35px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);font-size:18px;cursor:pointer}.fixtures{padding:3px 16px 12px}.match{display:grid;grid-template-columns:1fr 94px 1fr;align-items:center;gap:9px;padding:13px 5px;border-bottom:1px solid #ffffff0b}.match:last-child{border-bottom:0}.side{display:flex;align-items:center;gap:8px;font-weight:700}.side.away{justify-content:flex-end}.crest{width:28px;height:28px;flex:none;display:grid;place-items:center;border-radius:9px;background:#29342e;color:var(--green);font-size:9px;font-weight:900}.away .crest{order:2}.score{display:flex;justify-content:center;align-items:center;gap:5px}.score input{width:34px;height:34px;padding:0;border:1px solid var(--line);border-radius:9px;background:#111614;color:var(--text);text-align:center;font-size:16px;font-weight:800}.score input:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 2px #b9f36b22}.score input:disabled{opacity:.9}.score input::-webkit-inner-spin-button{-webkit-appearance:none}.dash{color:#728078;font-weight:800}.status{min-height:14px;margin-top:4px;color:#758179;text-align:center;font-size:9px}.stage-note{margin:8px 5px 4px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#ffffff05;color:var(--muted);font-size:12px;line-height:1.6}.stage-note strong{color:var(--text);font-size:13px}.tie-break{display:grid;justify-items:center;gap:5px;margin-top:7px}.tie-break label{color:var(--orange);font-size:9px;text-align:center}.penalty-select{padding:6px 26px 6px 8px;font-size:11px}.bye{padding:8px 5px;color:var(--muted);font-size:11px;text-align:center}.podium{margin:9px 3px 14px;padding:20px 14px 15px;border:1px solid #667951;border-radius:18px;background:radial-gradient(ellipse at 50% -25%,#b9f36b33,transparent 56%),linear-gradient(145deg,#253126,#171e1b 75%);box-shadow:0 14px 34px #0004}.podium-head{text-align:center;margin-bottom:15px}.podium-kicker{color:var(--green);font-size:9px;font-weight:900;letter-spacing:.2em;text-transform:uppercase}.podium-title{margin-top:4px;font-size:20px;font-weight:850;letter-spacing:-.04em}.podium-grid{display:grid;grid-template-columns:1fr 1.1fr 1fr;align-items:end;gap:8px;max-width:530px;margin:auto}.podium-place{min-width:0;padding:12px 6px 11px;border:1px solid #ffffff12;border-radius:14px 14px 10px 10px;background:#ffffff08;text-align:center}.podium-place.champion{padding-top:18px;padding-bottom:16px;border-color:#d4b85a99;background:linear-gradient(160deg,#76602a55,#ffffff09 75%);box-shadow:0 0 24px #e8c45a16}.medal{margin-bottom:7px;font-size:22px;line-height:1}.podium-label{color:#aab7af;font-size:9px;font-weight:900;letter-spacing:.11em;text-transform:uppercase}.champion .podium-label{color:#f1d77f}.podium-name{overflow-wrap:anywhere;margin-top:5px;font-size:clamp(13px,2vw,18px);font-weight:850}.podium-name.pending{color:#89968e;font-size:11px;font-weight:600}.setup{padding:21px}.setup h2{margin:0 0 5px;font-size:22px;letter-spacing:-.035em}.setup p{margin:0;color:var(--muted);font-size:13px}.add-row{display:flex;gap:8px;margin:19px 0 14px}.field{flex:1;min-width:0}.team-list{display:flex;flex-wrap:wrap;gap:8px;min-height:45px;margin:12px 0 19px}.team-chip{display:inline-flex;align-items:center;gap:8px;padding:7px 9px 7px 11px;border:1px solid var(--line);border-radius:999px;background:#ffffff07;font-size:12px;font-weight:750}.remove-team{width:21px;height:21px;border:0;border-radius:50%;background:#ffffff10;color:#dbe2de;cursor:pointer}.setup-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.saved{color:var(--muted);font-size:11px}.toast{position:fixed;left:50%;bottom:22px;z-index:3;transform:translate(-50%,20px);opacity:0;pointer-events:none;padding:10px 15px;border-radius:11px;background:#e8f4e9;color:#162218;font-size:13px;font-weight:750;transition:.2s}.toast.show{transform:translate(-50%,0);opacity:1}.hidden{display:none!important}
+@media(max-width:780px){.app{padding:23px 15px 42px}.layout{grid-template-columns:1fr}header{align-items:flex-start}.season-bar{justify-content:flex-start}.match{grid-template-columns:1fr 88px 1fr}}
+@media(max-width:420px){.season-bar{gap:6px}.select,.btn{font-size:12px;padding:8px 9px}.season-select{max-width:138px}.card-head{padding:16px 14px 11px}.fixtures{padding:3px 10px 10px}.side{gap:5px;font-size:12px}.crest{width:24px;height:24px}.score input{width:30px;height:32px}.match{grid-template-columns:1fr 82px 1fr;gap:5px}.podium{margin-left:0;margin-right:0;padding:17px 8px 11px}.podium-grid{gap:5px}.podium-place{padding:10px 3px}.podium-place.champion{padding-top:15px;padding-bottom:13px}.podium-label{font-size:7px;letter-spacing:.07em}}
+</style></head>
+<body><main class="app">
+  <div class="eyebrow"><span class="dot"></span> Community football · Shift Team C</div>
+  <header><div><h1>Shift Team C<br>League</h1><p class="subtitle" id="subtitle">Seasons, standings and the road to the final.</p></div><div class="season-bar"><select class="select season-select" id="seasonSelect" aria-label="Choose season"></select><button class="btn" id="newSeason">＋ New season</button></div></header>
+  <section class="card setup hidden" id="setupPanel"><h2 id="setupTitle">Build your roster</h2><p>Add every team before kickoff. There is no team-count cap. The roster is shuffled when you start, then a home-and-away round robin is generated. With 4–6 teams, the top four go straight to semifinals; with 7 or more, the top eight go through quarterfinals first.</p><div class="add-row"><input class="field" id="teamInput" placeholder="Enter a team name" maxlength="50"><button class="btn primary" id="addTeam">Add team</button></div><div class="team-list" id="teamList"></div><div class="setup-actions"><span class="saved" id="setupStatus">At least four teams are needed for semifinals and a third-place match.</span><button class="btn primary" id="startLeague" disabled>Shuffle teams & create fixtures</button></div></section>
+  <div class="layout" id="leagueLayout"><section class="card"><div class="card-head"><div><h2>League table</h2><div class="hint" id="tableHint">Ranked by points, then goal difference</div></div></div><div class="table-wrap"><table><thead><tr><th>#</th><th>Team</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead><tbody id="standings"></tbody></table></div><div class="table-foot" id="tableFoot">Top four qualify for semifinals; all other teams are eliminated after the league.</div></section>
+  <section class="card"><div class="card-head"><div><h2 id="fixtureTitle">Fixtures & results</h2><div class="hint" id="matchCount">Loading shared season…</div></div><div class="controls"><button class="nav" id="prev" aria-label="Previous stage">‹</button><select class="select" id="stageSelect" aria-label="Choose matchday or playoff stage"></select><button class="nav" id="next" aria-label="Next stage">›</button></div></div><div class="fixtures" id="fixtures"></div><div class="card-head" style="border-top:1px solid var(--line);padding-top:12px"><span class="saved" id="saved">Loading shared seasons…</span><button class="btn" id="copyTable">Copy table</button></div></section></div>
+  <div class="toast" id="toast"></div>
+</main>
+<script>
+const apiUrl="/.netlify/functions/scores";
+const legacyTeams=["Umar","Vincent","Adamu","Azeez","John","Uche"];
+const legacySlots=["Vincent","John","Uche","Umar","Adamu","Azeez"];
+const blankScore=()=>({home:"",away:"",winner:""});
+let state={version:2,activeSeasonId:"s2",seasons:[]};
+let viewingSeasonId="s2", stageValue="league-0", saveTimer, saveQueue=Promise.resolve(), toastTimer, hasLoaded=false;
+const $=s=>document.querySelector(s);
+function seasonById(id){return state.seasons.find(s=>s.id===id)}
+function activeSeason(){return seasonById(state.activeSeasonId)}
+function isActive(season){return season?.id===state.activeSeasonId && season.status!=="archived"}
+function isPlayed(s){return !!s&&s.home!==""&&s.away!==""&&Number.isFinite(+s.home)&&Number.isFinite(+s.away)}
+function makeLegacySeason(oldScores={}){
+  let ring=[...legacySlots], first=[];
+  for(let r=0;r<5;r++){const games=[];for(let i=0;i<3;i++){const home=ring[i],away=ring[5-i],key=`${home}|${away}`;games.push({home,away,key})}first.push(games);ring=[ring[0],ring[5],...ring.slice(1,5)]}
+  const rounds=[...first,...first.map(games=>games.map(g=>({home:g.away,away:g.home,key:`${g.away}|${g.home}`})))];
+  const scores={};rounds.flat().forEach(g=>scores[g.key]={...(oldScores[g.key]||blankScore())});
+  for(const key of ["semi1-leg1","semi1-leg2","semi2-leg1","semi2-leg2","final","third-place"])scores[key]={...(oldScores[key]||blankScore())};
+  return{id:"s1",name:"Season 1",status:"archived",teams:[...legacyTeams],schedule:rounds.map(games=>({games,byes:[]})),scores,createdAt:"",archived:true};
+}
+function setupState(legacy){return{version:2,activeSeasonId:"s2",seasons:[makeLegacySeason(legacy||{}),{id:"s2",name:"Season 2",status:"setup",teams:[],schedule:[],scores:{},createdAt:new Date().toISOString(),archived:false}]}}
+function shuffle(items){const out=[...items];for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out}
+function generateSchedule(teamNames){
+  const ring=shuffle(teamNames);if(ring.length%2)ring.push(null);
+  let rotation=[...ring];const first=[];const roundsPerLeg=rotation.length-1;
+  for(let r=0;r<roundsPerLeg;r++){
+    const games=[],byes=[];
+    for(let i=0;i<rotation.length/2;i++){
+      let left=rotation[i],right=rotation[rotation.length-1-i];
+      if(!left||!right){byes.push(left||right);continue}
+      if((r+i)%2)[left,right]=[right,left];
+      const key=`league-r${r+1}-m${games.length+1}`;games.push({home:left,away:right,key});
+    }
+    first.push({games,byes});rotation=[rotation[0],rotation[rotation.length-1],...rotation.slice(1,-1)];
+  }
+  const second=first.map((day,r)=>({games:day.games.map((g,i)=>({home:g.away,away:g.home,key:`return-r${r+1}-m${i+1}`})),byes:[...day.byes]}));
+  return [...first,...second];
+}
+function statsFor(season){
+  const stats=Object.fromEntries(season.teams.map(t=>[t,{team:t,mp:0,w:0,d:0,l:0,gf:0,ga:0,form:[]}]));
+  season.schedule.flatMap(day=>day.games).forEach(g=>{const s=season.scores[g.key];if(!isPlayed(s))return;const h=+s.home,a=+s.away,H=stats[g.home],A=stats[g.away];if(!H||!A)return;H.mp++;A.mp++;H.gf+=h;H.ga+=a;A.gf+=a;A.ga+=h;if(h>a){H.w++;A.l++}else if(h<a){A.w++;H.l++}else{H.d++;A.d++}});
+  return Object.values(stats).map(x=>({...x,gd:x.gf-x.ga,pts:x.w*3+x.d})).sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf||a.team.localeCompare(b.team));
+}
+function leagueDone(season){return season.schedule.length>0&&season.schedule.flatMap(d=>d.games).every(g=>isPlayed(season.scores[g.key]))}
+function twoLegResult(season,top,bottom,key1,key2){const a=season.scores[key1],b=season.scores[key2];if(!isPlayed(a)||!isPlayed(b))return{winner:null,loser:null,tied:false};const topGoals=+a.away + +b.home,bottomGoals=+a.home + +b.away;if(topGoals>bottomGoals)return{winner:top,loser:bottom,tied:false};if(bottomGoals>topGoals)return{winner:bottom,loser:top,tied:false};const winner=b.winner;return{winner:[top,bottom].includes(winner)?winner:null,loser:[top,bottom].includes(winner)?(winner===top?bottom:top):null,tied:true}}
+function usesQuarterfinals(season){if(season.knockoutFormat)return season.knockoutFormat==="quarterfinals";const hasOldSemiResults=["semi1-leg1","semi1-leg2","semi2-leg1","semi2-leg2"].some(k=>isPlayed(season.scores[k]));return season.teams.length>=7&&!hasOldSemiResults}
+function quarterPairings(season){const seeds=statsFor(season).slice(0,8).map(x=>x.team);return[[seeds[0],seeds[7]||null],[seeds[3],seeds[4]||null],[seeds[1],seeds[6]||null],[seeds[2],seeds[5]||null]]}
+function quarterResults(season){return quarterPairings(season).map(([top,bottom],i)=>bottom?twoLegResult(season,top,bottom,`qf${i+1}-leg1`,`qf${i+1}-leg2`):{winner:top,loser:null,tied:false,bye:true})}
+function semiPairings(season){if(usesQuarterfinals(season)){const results=quarterResults(season);return results.every(r=>r.winner)?[[results[0].winner,results[1].winner],[results[2].winner,results[3].winner]]:null}const seeds=statsFor(season).slice(0,4).map(x=>x.team);return seeds.length===4?[[seeds[0],seeds[3]],[seeds[1],seeds[2]]]:null}
+function makeSemiGame(top,bottom,tie,second){return second?{home:top,away:bottom,key:`${tie}-leg2`}:{home:bottom,away:top,key:`${tie}-leg1`}}
+function matchWinner(season,key,home,away){const s=season.scores[key];if(!isPlayed(s))return null;if(+s.home>+s.away)return home;if(+s.away>+s.home)return away;return[home,away].includes(s.winner)?s.winner:null}
+function setStatus(season){if(season.status==="archived"||season.status==="setup")return;if(!leagueDone(season)){season.status="league";return}season.status="playoffs";const pairs=semiPairings(season);if(!pairs)return;const a=twoLegResult(season,pairs[0][0],pairs[0][1],"semi1-leg1","semi1-leg2"),b=twoLegResult(season,pairs[1][0],pairs[1][1],"semi2-leg1","semi2-leg2");if(a.winner&&b.winner&&matchWinner(season,"final",a.winner,b.winner)&&matchWinner(season,"third-place",a.loser,b.loser))season.status="complete"}
+function renderSeasonSelect(){const el=$("#seasonSelect"),current=seasonById(viewingSeasonId);el.innerHTML=state.seasons.map(s=>`<option value="${s.id}">${s.name}${s.id===state.activeSeasonId?" · Current":" · Archive"}</option>`).join("");if(current)el.value=current.id;$("#newSeason").disabled=!activeSeason()}
+function renderSetup(season){const active=isActive(season)&&season.status==="setup";$("#setupPanel").classList.toggle("hidden",!active);$("#leagueLayout").classList.toggle("hidden",active);if(!active)return;$("#setupTitle").textContent=`Set up ${season.name}`;$("#teamList").innerHTML=season.teams.map((t,i)=>`<span class="team-chip">${escapeHtml(t)}<button class="remove-team" data-remove="${i}" aria-label="Remove ${escapeHtml(t)}">×</button></span>`).join("")||'<span class="saved">No teams added yet.</span>';$("#startLeague").disabled=season.teams.length<4;$("#setupStatus").textContent=season.teams.length<4?`Add ${4-season.teams.length} more team${4-season.teams.length===1?"":"s"}; at least four are needed for semifinals and third place.`:`${season.teams.length} teams · ${season.teams.length%2?season.teams.length:season.teams.length-1} matchdays per leg · all play home and away.`;$("#teamList").querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{season.teams.splice(+b.dataset.remove,1);render();persist()})}
+function fillStageOptions(season){const select=$("#stageSelect"),ready=season.schedule.length>0;select.innerHTML="";if(ready){season.schedule.forEach((_,i)=>{const op=document.createElement("option");op.value=`league-${i}`;op.textContent=`Matchday ${i+1}`;select.append(op)});const stages=[];if(usesQuarterfinals(season))stages.push(["quarter-1","Quarterfinals · First leg"],["quarter-2","Quarterfinals · Second leg"]);stages.push(["semi-1","Semifinals · First leg"],["semi-2","Semifinals · Second leg"],["finals","Final & third place"]);for(const [value,label] of stages){const op=document.createElement("option");op.value=value;op.textContent=label;select.append(op)}}select.disabled=!ready;if(ready&&!Array.from(select.options).some(o=>o.value===stageValue))stageValue="league-0";select.value=stageValue}
+function renderTable(season){const rows=statsFor(season);$("#standings").innerHTML=rows.map((x,i)=>`<tr><td class="rank">${String(i+1).padStart(2,"0")}</td><td class="team-name">${escapeHtml(x.team)}</td><td>${x.mp}</td><td>${x.w}</td><td>${x.d}</td><td>${x.l}</td><td>${x.gd>0?"+":""}${x.gd}</td><td class="pts">${x.pts}</td></tr>`).join("");const complete=leagueDone(season),qualifiers=Math.min(usesQuarterfinals(season)?8:4,season.teams.length);$("#tableHint").textContent=season.status==="setup"?"Roster not set · standings begin when the league starts":complete?"League stage complete · playoff seeds confirmed":"Ranked by points, then goal difference";$("#tableFoot").textContent=complete?`Top ${qualifiers} advance; all other teams are eliminated.`:`Top ${qualifiers} qualify for the knockout stage after every league match is played.`}
+function renderLeagueDay(season,index){const day=season.schedule[index],games=day.games;$("#fixtures").innerHTML=games.map(g=>matchHtml(season,g,!isActive(season))).join("")+(day.byes.length?`<div class="bye">Bye this matchday: ${day.byes.map(escapeHtml).join(", ")}</div>`:"");const done=games.filter(g=>isPlayed(season.scores[g.key])).length;$("#matchCount").textContent=`${done} of ${games.length} matches played this matchday`;bindScoreInputs()}
+function matchHtml(season,match,readOnly=false,penaltyTeams=[]){const s=season.scores[match.key]||blankScore(),played=isPlayed(s),needsPenalty=penaltyTeams.length===2&&played&&+s.home===+s.away;const penalty=needsPenalty?`<div class="tie-break"><label>Level on aggregate · choose penalty winner</label><select class="select penalty-select" data-team="winner" data-key="${match.key}" ${readOnly?"disabled":""}><option value="">Choose winner</option>${penaltyTeams.map(t=>`<option value="${escapeHtml(t)}" ${s.winner===t?"selected":""}>${escapeHtml(t)}</option>`).join("")}</select></div>`:"";return`<div class="match"><div class="side"><span class="crest">${escapeHtml(match.home.slice(0,2).toUpperCase())}</span><span>${escapeHtml(match.home)}</span></div><div><div class="score"><input type="number" min="0" max="99" inputmode="numeric" aria-label="${escapeHtml(match.home)} goals" data-team="home" data-key="${match.key}" value="${s.home}" placeholder="–" ${readOnly?"disabled":""}><span class="dash">:</span><input type="number" min="0" max="99" inputmode="numeric" aria-label="${escapeHtml(match.away)} goals" data-team="away" data-key="${match.key}" value="${s.away}" placeholder="–" ${readOnly?"disabled":""}></div><div class="status">${played?"FULL TIME":"UPCOMING"}</div>${penalty}</div><div class="side away"><span>${escapeHtml(match.away)}</span><span class="crest">${escapeHtml(match.away.slice(0,2).toUpperCase())}</span></div></div>`}
+function renderPlayoffs(season,which){
+  const box=$("#fixtures"),readOnly=!isActive(season);
+  if(!leagueDone(season)){
+    const count=Math.min(usesQuarterfinals(season)?8:4,season.teams.length);
+    box.innerHTML=`<div class="stage-note"><strong>League stage in progress</strong><br>Finish all league fixtures. The top ${count} will qualify for the knockout stage.</div>`;
+    $("#matchCount").textContent=`Top ${count} advance after the league`;return;
+  }
+  if(which==="quarter-1"||which==="quarter-2"){
+    const second=which==="quarter-2",pairs=quarterPairings(season),results=quarterResults(season),games=[],byeNotes=[];
+    pairs.forEach(([top,bottom],i)=>{
+      if(!bottom){byeNotes.push(`<div class="stage-note">Seed 1 · ${escapeHtml(top)} receives a quarterfinal bye and advances to the semifinals.</div>`);return}
+      games.push({game:second?{home:top,away:bottom,key:`qf${i+1}-leg2`}:{home:bottom,away:top,key:`qf${i+1}-leg1`},tied:results[i].tied,seed:i+1});
+    });
+    box.innerHTML=`<div class="stage-note"><strong>Quarterfinals · ${second?"Second leg":"First leg"}</strong><br>The top eight seeds qualify. Higher seeds host the second leg; the top seed receives a bye if seven teams qualify.</div>${byeNotes.join("")}${games.map(({game,tied,seed})=>matchHtml(season,game,readOnly,second&&tied?[pairs[seed-1][0],pairs[seed-1][1]]:[])).join("")}<div class="table-foot">Two legs per tie · aggregate score decides · tied aggregates go to penalties.</div>`;
+    $("#matchCount").textContent=`${games.filter(x=>isPlayed(season.scores[x.game.key])).length} of ${games.length} quarterfinal matches played this leg`;
+    bindScoreInputs();return;
+  }
+  const pairs=semiPairings(season);
+  if(!pairs){box.innerHTML='<div class="stage-note"><strong>Semifinals await the quarterfinals</strong><br>Complete every quarterfinal tie and any required penalty decisions to reveal the semifinal fixtures.</div>';$("#matchCount").textContent="Quarterfinal results determine the semifinals";return}
+  if(which==="semi-1"||which==="semi-2"){
+    const second=which==="semi-2",games=pairs.map((pair,i)=>makeSemiGame(pair[0],pair[1],`semi${i+1}`,second)),results=pairs.map((pair,i)=>twoLegResult(season,pair[0],pair[1],`semi${i+1}-leg1`,`semi${i+1}-leg2`));
+    box.innerHTML=`<div class="stage-note"><strong>Semifinals · ${second?"Second leg":"First leg"}</strong><br>${pairs.map((p,i)=>`Semi ${i+1}: ${escapeHtml(p[0])} vs ${escapeHtml(p[1])}`).join(" · ")}</div>${games.map((g,i)=>matchHtml(season,g,readOnly,second&&results[i].tied?pairs[i]:[])).join("")}<div class="table-foot">Two legs per tie · aggregate score decides · tied aggregates go to penalties.</div>`;
+    $("#matchCount").textContent=`${games.filter(g=>isPlayed(season.scores[g.key])).length} of ${games.length} semifinal matches played this leg`;
+  }else{
+    const results=pairs.map((pair,i)=>twoLegResult(season,pair[0],pair[1],`semi${i+1}-leg1`,`semi${i+1}-leg2`));
+    if(results.some(r=>!r.winner)){box.innerHTML=`<div class="stage-note"><strong>Final stage awaits the semifinals</strong><br>Complete both two-leg ties${results.some(r=>r.tied)?" and choose any penalty winners":""} to set the final and third-place match.</div>`;$("#matchCount").textContent="Semifinal results determine the finalists";return}
+    const final={home:results[0].winner,away:results[1].winner,key:"final"},bronze={home:results[0].loser,away:results[1].loser,key:"third-place"},champion=matchWinner(season,"final",final.home,final.away),runner=champion?(champion===final.home?final.away:final.home):null,third=matchWinner(season,"third-place",bronze.home,bronze.away),done=!!(champion&&third);
+    const card=(label,team,medal,extra="")=>`<div class="podium-place ${extra}"><div class="medal">${medal}</div><div class="podium-label">${label}</div><div class="podium-name ${team?"":"pending"}">${team?escapeHtml(team):"Awaiting result"}</div></div>`;
+    box.innerHTML=`<div class="podium"><div class="podium-head"><div class="podium-kicker">${escapeHtml(season.name)} · final standings</div><div class="podium-title">${done?"The podium is set":"Who will take the podium?"}</div></div><div class="podium-grid">${card("Runner-up",runner,"🥈")}${card("Champion",champion,"🏆","champion")}${card("Third place",third,"🥉")}</div></div>${matchHtml(season,final,readOnly,[final.home,final.away])}${matchHtml(season,bronze,readOnly,[bronze.home,bronze.away])}<div class="table-foot">The final decides champion and runner-up; the playoff decides third place.</div>`;
+    $("#matchCount").textContent=`${["final","third-place"].filter(k=>isPlayed(season.scores[k])).length} of 2 final-stage matches played`;
+  }
+  bindScoreInputs();
+}
+function bindScoreInputs(){document.querySelectorAll("#fixtures .score input").forEach(e=>e.addEventListener("input",onScore));document.querySelectorAll("#fixtures .penalty-select").forEach(e=>e.addEventListener("change",onScore))}
+function renderFixtures(season){if(!season.schedule.length){$("#fixtures").innerHTML='<div class="stage-note"><strong>Fixtures appear here when the league starts.</strong><br>Enter your roster and choose “Shuffle teams & create fixtures”.</div>';$("#matchCount").textContent="League setup";return}if(stageValue.startsWith("league-"))renderLeagueDay(season,+stageValue.slice(7));else renderPlayoffs(season,stageValue)}
+function render(){const season=seasonById(viewingSeasonId)||activeSeason();if(!season)return;viewingSeasonId=season.id;if(season.schedule.length&&usesQuarterfinals(season)){["qf1-leg1","qf1-leg2","qf2-leg1","qf2-leg2","qf3-leg1","qf3-leg2","qf4-leg1","qf4-leg2"].forEach(k=>season.scores[k]??=blankScore())}renderSeasonSelect();renderSetup(season);$("#subtitle").textContent=`${season.name} · ${season.status==="setup"?"Set up your teams":season.status==="complete"?"Season complete":season.status==="archived"?"Season archive":"League and knockout stage"}`;$("#fixtureTitle").textContent=season.archived?`${season.name} archive`:"Fixtures & results";fillStageOptions(season);renderTable(season);renderFixtures(season)}
+function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function showToast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2200)}
+async function editorKey(){let key=sessionStorage.getItem("shift-team-c-editor-key");if(!key){key=prompt("Enter the league editor key to save this change:");if(!key)return null;sessionStorage.setItem("shift-team-c-editor-key",key)}return key}
+async function persist(){const key=await editorKey();if(!key){$("#saved").textContent="Change not shared";await loadState();return}const snapshot=JSON.stringify(state);saveQueue=saveQueue.then(async()=>{const res=await fetch(apiUrl,{method:"PUT",headers:{"content-type":"application/json","x-league-key":key},body:snapshot});if(res.status===401){sessionStorage.removeItem("shift-team-c-editor-key");throw new Error("Editor key rejected")}if(!res.ok)throw new Error("Could not save");["shift-team-c-league-v4","shift-team-c-league-v3","shift-team-c-league-v2"].forEach(k=>localStorage.removeItem(k));$("#saved").textContent="Shared with everyone · saved"}).catch(async e=>{$("#saved").textContent=e.message;await loadState()});await saveQueue}
+async function loadState(){try{const res=await fetch(apiUrl,{cache:"no-store"});if(!res.ok)throw Error();const incoming=await res.json();let localMigration=false;if(incoming.seasons){state=incoming}else{let legacy=incoming.legacyScores;if(!legacy||!Object.keys(legacy).length){for(const key of ["shift-team-c-league-v4","shift-team-c-league-v3","shift-team-c-league-v2"]){try{const old=JSON.parse(localStorage.getItem(key));if(old&&Object.keys(old).length){legacy=old;localMigration=true;break}}catch{}}}state=setupState(legacy||{})}if(!hasLoaded||!seasonById(viewingSeasonId))viewingSeasonId=state.activeSeasonId;hasLoaded=true;render();$("#saved").textContent=localMigration?"Season 1 results found on this device · make a change to share them":"Shared seasons · live"}catch{$("#saved").textContent="Could not load shared seasons"}}
+function onScore(event){const el=event.target,season=seasonById(viewingSeasonId),key=el.dataset.key,side=el.dataset.team;if(!isActive(season))return;if(side==="winner"){season.scores[key].winner=el.value;setStatus(season);render();persist();return}let value=el.value;if(value!==""&&(+value<0||+value>99)){value=String(Math.max(0,Math.min(99,+value)));el.value=value}season.scores[key][side]=value;setStatus(season);$("#saved").textContent="Unsaved changes";clearTimeout(saveTimer);saveTimer=setTimeout(persist,450);renderTable(season);const match=el.closest(".match");if(match)match.querySelector(".status").textContent=isPlayed(season.scores[key])?"FULL TIME":"UPCOMING";if(stageValue.startsWith("league-")){$("#matchCount").textContent=`${season.schedule[+stageValue.slice(7)].games.filter(g=>isPlayed(season.scores[g.key])).length} of ${season.schedule[+stageValue.slice(7)].games.length} matches played this matchday`}else if(isPlayed(season.scores[key]))renderFixtures(season)}
+function startSeason(season){if(season.teams.length<4)return;season.teams=shuffle(season.teams);season.knockoutFormat=season.teams.length>=7?"quarterfinals":"semifinals";season.schedule=generateSchedule(season.teams);season.scores={};season.schedule.flatMap(d=>d.games).forEach(g=>season.scores[g.key]=blankScore());["qf1-leg1","qf1-leg2","qf2-leg1","qf2-leg2","qf3-leg1","qf3-leg2","qf4-leg1","qf4-leg2","semi1-leg1","semi1-leg2","semi2-leg1","semi2-leg2","final","third-place"].forEach(k=>season.scores[k]=blankScore());season.status="league";season.createdAt=new Date().toISOString();stageValue="league-0";render();persist()}
+function addNewSeason(){const current=activeSeason();if(current&&(current.status==="league"||current.status==="playoffs"||(current.status==="setup"&&current.teams.length))&&!confirm(`Archive ${current.name} and start a new season?`))return;if(current)current.archived=true,current.status="archived";const number=state.seasons.reduce((n,s)=>Math.max(n,+(s.name.match(/\d+/)?.[0]||0)),0)+1;const next={id:`s${number}`,name:`Season ${number}`,status:"setup",teams:[],schedule:[],scores:{},createdAt:new Date().toISOString(),archived:false};state.seasons.push(next);state.activeSeasonId=next.id;viewingSeasonId=next.id;stageValue="league-0";render();persist()}
+function addTeam(){const season=activeSeason(),input=$("#teamInput"),team=input.value.trim();if(!team)return;if(season.teams.some(t=>t.toLocaleLowerCase()===team.toLocaleLowerCase())){showToast("That team is already on the roster");return}season.teams.push(team);input.value="";render();persist();input.focus()}
+function copyTable(){const season=seasonById(viewingSeasonId),rows=statsFor(season);const text=[`${season.name} league table`,`# TEAM MP W D L GD PTS`,...rows.map((t,i)=>`${i+1} ${t.team} ${t.mp} ${t.w} ${t.d} ${t.l} ${t.gd} ${t.pts}`)].join("\n");navigator.clipboard.writeText(text).then(()=>showToast("League table copied")).catch(()=>showToast("Clipboard unavailable"))}
+$("#addTeam").onclick=addTeam;$("#teamInput").addEventListener("keydown",e=>{if(e.key==="Enter")addTeam()});$("#startLeague").onclick=()=>{const season=activeSeason();if(confirm(`Shuffle ${season.teams.length} teams and create the full home-and-away schedule?`))startSeason(season)};$("#newSeason").onclick=addNewSeason;$("#seasonSelect").onchange=e=>{viewingSeasonId=e.target.value;stageValue="league-0";render()};$("#stageSelect").onchange=e=>{stageValue=e.target.value;renderFixtures(seasonById(viewingSeasonId))};$("#prev").onclick=()=>{const select=$("#stageSelect"),options=[...select.options];if(!options.length)return;const i=options.findIndex(o=>o.value===stageValue);stageValue=options[(i-1+options.length)%options.length].value;select.value=stageValue;renderFixtures(seasonById(viewingSeasonId))};$("#next").onclick=()=>{const select=$("#stageSelect"),options=[...select.options];if(!options.length)return;const i=options.findIndex(o=>o.value===stageValue);stageValue=options[(i+1)%options.length].value;select.value=stageValue;renderFixtures(seasonById(viewingSeasonId))};$("#copyTable").onclick=copyTable;
+loadState();setInterval(()=>{if(!document.activeElement?.matches("input,select"))loadState()},20000);
+</script></body></html>
