@@ -10,4 +10,4 @@ Deploy this folder (`outputs`) as the site base directory from a Git-connected N
 
 In Netlify, open **Project configuration → Environment variables** and add `LEAGUE_EDIT_KEY` with a strong private key. Do not put the key in the HTML or publish it. Redeploy after adding the variable. The first time you edit a score in a browser session, enter that key when prompted; it will be remembered for that tab session. Other visitors can open the site and see the shared results without the key. The page refreshes shared scores every 20 seconds.
 
-The function writes scores to the site's Netlify Blobs store, which persists across deploys. Existing scores saved in an individual browser's `localStorage` do not migrate automatically; enter them again after deploying this version.
+The function writes scores to the site's Netlify Blobs store, which persists across deploys. Season 1 automatically recovers scores from the legacy `current-scores` blob when available, and an editor can enter or correct scores in archived seasons using the editor key. Older scores saved only in a browser's `localStorage` can be recovered only from that same browser profile.

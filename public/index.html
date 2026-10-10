@@ -740,6 +740,9 @@
           season?.id === state.activeSeasonId && season.status !== "archived"
         );
       }
+      function canEditScores(season) {
+        return isActive(season) || season?.status === "archived";
+      }
       function isPlayed(s) {
         return (
           !!s &&
@@ -817,6 +820,37 @@
             },
           ],
         };
+      }
+      function mergeLegacyScores(legacy) {
+        if (!legacy || typeof legacy !== "object" || Array.isArray(legacy))
+          return 0;
+        const legacySeason = makeLegacySeason(legacy);
+        let archive = seasonById("s1");
+        if (!archive) {
+          archive = legacySeason;
+          state.seasons.unshift(archive);
+        }
+        let recovered = 0;
+        for (const [key, score] of Object.entries(legacySeason.scores)) {
+          if (isPlayed(score) && !isPlayed(archive.scores?.[key])) {
+            archive.scores[key] = { ...score };
+            recovered++;
+          }
+        }
+        return recovered;
+      }
+      function readLocalLegacyScores() {
+        for (const key of [
+          "shift-team-c-league-v4",
+          "shift-team-c-league-v3",
+          "shift-team-c-league-v2",
+        ]) {
+          try {
+            const old = JSON.parse(localStorage.getItem(key));
+            if (old && Object.keys(old).length) return old;
+          } catch {}
+        }
+        return null;
       }
       function shuffle(items) {
         const out = [...items];
@@ -1259,7 +1293,7 @@
         const day = season.schedule[index],
           games = day.games;
         $("#fixtures").innerHTML =
-          games.map((g) => matchHtml(season, g, !isActive(season))).join("") +
+          games.map((g) => matchHtml(season, g, !canEditScores(season))).join("") +
           (day.byes.length
             ? `<div class="bye">Bye this matchday: ${day.byes.map(escapeHtml).join(", ")}</div>`
             : "");
@@ -1280,7 +1314,7 @@
       }
       function renderPlayoffs(season, which) {
         const box = $("#fixtures"),
-          readOnly = !isActive(season);
+          readOnly = !canEditScores(season);
         if (!leagueDone(season)) {
           const count = Math.min(
             usesGroups(season) ? 6 : usesQuarterfinals(season) ? 8 : 4,
@@ -1520,34 +1554,42 @@
           if (!res.ok) throw Error();
           const incoming = await res.json();
           let localMigration = false;
+          let recoveredCount = 0;
           if (incoming.seasons) {
+            const recoveryScores = incoming.recoveryLegacyScores;
+            delete incoming.recoveryLegacyScores;
             state = incoming;
+            let legacy = recoveryScores;
+            if (!legacy || !Object.keys(legacy).length) {
+              legacy = readLocalLegacyScores();
+              localMigration = !!legacy;
+            }
+            recoveredCount = mergeLegacyScores(legacy);
+            localMigration = recoveredCount > 0 && localMigration;
           } else {
             let legacy = incoming.legacyScores;
+            if (
+              !legacy &&
+              Object.values(incoming).some(
+                (score) => score && typeof score.home === "string" && typeof score.away === "string",
+              )
+            )
+              legacy = incoming;
             if (!legacy || !Object.keys(legacy).length) {
-              for (const key of [
-                "shift-team-c-league-v4",
-                "shift-team-c-league-v3",
-                "shift-team-c-league-v2",
-              ]) {
-                try {
-                  const old = JSON.parse(localStorage.getItem(key));
-                  if (old && Object.keys(old).length) {
-                    legacy = old;
-                    localMigration = true;
-                    break;
-                  }
-                } catch {}
-              }
+              legacy = readLocalLegacyScores();
+              localMigration = !!legacy;
             }
             state = setupState(legacy || {});
+            recoveredCount = Object.values(state.seasons[0].scores).filter(isPlayed).length;
           }
           if (!hasLoaded || !seasonById(viewingSeasonId))
             viewingSeasonId = state.activeSeasonId;
           hasLoaded = true;
           render();
-          $("#saved").textContent = localMigration
-            ? "Season 1 results found on this device · make a change to share them"
+          $("#saved").textContent = recoveredCount
+            ? localMigration
+              ? `Recovered ${recoveredCount} Season 1 results from this device · edit to share them`
+              : `Recovered ${recoveredCount} Season 1 results from the legacy backup`
             : "Shared seasons · live";
         } catch {
           $("#saved").textContent = "Could not load shared seasons";
@@ -1558,7 +1600,7 @@
           season = seasonById(viewingSeasonId),
           key = el.dataset.key,
           side = el.dataset.team;
-        if (!isActive(season)) return;
+        if (!canEditScores(season)) return;
         if (side === "winner") {
           season.scores[key].winner = el.value;
           setStatus(season);
