@@ -315,6 +315,27 @@
       .tie-break { margin-top: 7px; display: grid; gap: 5px; justify-items: center; }
       .tie-break label { color: var(--orange); font-size: 9px; text-align: center; }
       .penalty-winner { padding: 6px 26px 6px 8px; font-size: 11px; }
+      .podium {
+        position: relative;
+        overflow: hidden;
+        margin: 9px 4px 14px;
+        padding: 20px 16px 16px;
+        border: 1px solid #667951;
+        border-radius: 18px;
+        background: radial-gradient(ellipse at 50% -25%, #b9f36b33, transparent 56%), linear-gradient(145deg, #253126, #171e1b 75%);
+        box-shadow: 0 14px 34px #0004, inset 0 1px #ffffff10;
+      }
+      .podium-head { text-align: center; margin-bottom: 16px; }
+      .podium-kicker { color: var(--green); font-size: 9px; font-weight: 900; letter-spacing: .2em; text-transform: uppercase; }
+      .podium-title { margin-top: 4px; font-size: 20px; font-weight: 850; letter-spacing: -.04em; }
+      .podium-grid { display: grid; grid-template-columns: 1fr 1.1fr 1fr; align-items: end; gap: 9px; max-width: 530px; margin: auto; }
+      .podium-place { min-width: 0; text-align: center; padding: 13px 8px 12px; border: 1px solid #ffffff12; border-radius: 14px 14px 10px 10px; background: #ffffff08; }
+      .podium-place.champion { padding-top: 19px; padding-bottom: 17px; border-color: #d4b85a99; background: linear-gradient(160deg, #76602a55, #ffffff09 75%); box-shadow: 0 0 24px #e8c45a16; }
+      .podium-medal { font-size: 22px; line-height: 1; margin-bottom: 8px; }
+      .podium-label { color: #aab7af; font-size: 9px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
+      .champion .podium-label { color: #f1d77f; }
+      .podium-name { overflow-wrap: anywhere; margin-top: 5px; font-size: clamp(13px, 2vw, 18px); font-weight: 850; letter-spacing: -.025em; }
+      .podium-name.pending { color: #89968e; font-size: 12px; font-weight: 600; }
       .bottom {
         display: flex;
         justify-content: space-between;
@@ -471,6 +492,11 @@
           padding-right: 28px;
           font-size: 13px;
         }
+        .podium { margin-left: 0; margin-right: 0; padding: 17px 9px 11px; }
+        .podium-grid { gap: 5px; }
+        .podium-place { padding: 11px 4px 10px; }
+        .podium-place.champion { padding-top: 16px; padding-bottom: 14px; }
+        .podium-label { font-size: 8px; letter-spacing: .08em; }
       }
     </style>
   </head>
@@ -712,6 +738,13 @@
           : "";
         return `<div class="match" data-match-key="${match.key}"><div class="side"><span class="crest">${match.home.slice(0, 2).toUpperCase()}</span><span>${match.home}</span></div><div><div class="score"><input inputmode="numeric" type="number" min="0" max="99" aria-label="${match.home} goals" data-team="home" data-key="${match.key}" value="${s.home}" placeholder="–"><span class="dash">:</span><input inputmode="numeric" type="number" min="0" max="99" aria-label="${match.away} goals" data-team="away" data-key="${match.key}" value="${s.away}" placeholder="–"></div><div class="status">${played ? "FULL TIME" : "UPCOMING"}</div>${penalty}</div><div class="side away"><span>${match.away}</span><span class="crest">${match.away.slice(0, 2).toUpperCase()}</span></div></div>`;
       }
+      function matchWinner(key, home, away) {
+        const result = scores[key];
+        if (!isPlayed(result)) return null;
+        if (+result.home > +result.away) return home;
+        if (+result.away > +result.home) return away;
+        return [home, away].includes(result.winner) ? result.winner : null;
+      }
       function renderPlayoffs() {
         const seeds = semifinalTeams();
         const fixtures = document.querySelector("#fixtures");
@@ -748,18 +781,14 @@
             playoffMatch(final, [final.home, final.away]),
             playoffMatch(thirdPlace, [thirdPlace.home, thirdPlace.away]),
           ];
-          const finalScore = scores.final, bronzeScore = scores["third-place"];
-          const title = isPlayed(finalScore) && finalScore.home !== finalScore.away
-            ? `Champion: ${+finalScore.home > +finalScore.away ? final.home : final.away} · Runner-up: ${+finalScore.home > +finalScore.away ? final.away : final.home}`
-            : isPlayed(finalScore) && finalScore.winner
-              ? `Champion: ${finalScore.winner} · Runner-up: ${finalScore.winner === final.home ? final.away : final.home}`
-              : "Final & third-place playoff";
-          const bronze = isPlayed(bronzeScore) && bronzeScore.home !== bronzeScore.away
-            ? `Third place: ${+bronzeScore.home > +bronzeScore.away ? thirdPlace.home : thirdPlace.away}`
-            : isPlayed(bronzeScore) && bronzeScore.winner
-              ? `Third place: ${bronzeScore.winner}`
-            : "The third-place match determines bronze";
-          fixtures.innerHTML = `<div class="stage-note"><strong>${title}</strong><br>${bronze}</div>${finals.join("")}<div class="table-foot">The final determines champion and runner-up. The playoff determines third place.</div>`;
+          const champion = matchWinner("final", final.home, final.away);
+          const runnerUp = champion ? (champion === final.home ? final.away : final.home) : null;
+          const bronze = matchWinner("third-place", thirdPlace.home, thirdPlace.away);
+          const complete = Boolean(champion && bronze);
+          const podiumCard = (place, label, team, medal, extra = "") =>
+            `<div class="podium-place ${extra}"><div class="podium-medal">${medal}</div><div class="podium-label">${label}</div><div class="podium-name ${team ? "" : "pending"}">${team || "Awaiting result"}</div></div>`;
+          const podium = `<div class="podium"><div class="podium-head"><div class="podium-kicker">Shift Team C · Final standings</div><div class="podium-title">${complete ? "The podium is set" : "Who will take the podium?"}</div></div><div class="podium-grid">${podiumCard("2", "Runner-up", runnerUp, "🥈")}${podiumCard("1", "Champion", champion, "🏆", "champion")}${podiumCard("3", "Third place", bronze, "🥉")}</div></div>`;
+          fixtures.innerHTML = `${podium}${finals.join("")}<div class="table-foot">The final decides champion and runner-up; the playoff decides third place.</div>`;
           document.querySelector("#matchCount").textContent = `${["final", "third-place"].filter((k) => isPlayed(scores[k])).length} of 2 final-stage matches played`;
         }
         document.querySelectorAll("#fixtures .score input").forEach((input) => input.addEventListener("input", onScore));
