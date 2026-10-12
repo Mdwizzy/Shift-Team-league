@@ -654,6 +654,7 @@
             id="seasonSelect"
             aria-label="Choose season"
           ></select
+          ><button class="btn hidden" id="clubAdminUnlock">Admin edit</button
           ><button class="btn hidden" id="switchToGroups">Use top-six groups</button
           ><button class="btn" id="newSeason">＋ New season</button>
         </div>
@@ -772,6 +773,9 @@
       }
       function canEditScores(season) {
         return isActive(season) || season?.status === "archived";
+      }
+      function isEditorUnlocked() {
+        return !!sessionStorage.getItem("shift-team-c-editor-key");
       }
       function canSwitchToGroups(season) {
         if (
@@ -1257,6 +1261,10 @@
           current?.id !== state.activeSeasonId ||
             !canSwitchToGroups(activeSeason()),
         );
+        $("#clubAdminUnlock").classList.toggle(
+          "hidden",
+          current?.id !== "s2" || isEditorUnlocked(),
+        );
       }
       function renderSetup(season) {
         const active = isActive(season) && season.status === "setup";
@@ -1376,7 +1384,7 @@
           ? `<div class="tie-break"><label>Level on aggregate · choose penalty winner</label><select class="select penalty-select" data-team="winner" data-key="${match.key}" ${readOnly ? "disabled" : ""}><option value="">Choose winner</option>${penaltyTeams.map((t) => `<option value="${escapeHtml(t)}" ${s.winner === t ? "selected" : ""}>${escapeHtml(t)}</option>`).join("")}</select></div>`
           : "";
         const clubChoices = showClubChoices
-          ? `<div class="club-choices"><label class="club-choice-wrap">${escapeHtml(match.home)} · club/country<input class="club-choice" type="text" maxlength="60" aria-label="${escapeHtml(match.home)} club or country" data-key="${match.key}" data-side="home" value="${escapeHtml(s.homeClub || "")}" placeholder="Enter club or country" ${readOnly ? "disabled" : ""}></label><label class="club-choice-wrap">${escapeHtml(match.away)} · club/country<input class="club-choice" type="text" maxlength="60" aria-label="${escapeHtml(match.away)} club or country" data-key="${match.key}" data-side="away" value="${escapeHtml(s.awayClub || "")}" placeholder="Enter club or country" ${readOnly ? "disabled" : ""}></label></div>`
+          ? `<div class="club-choices"><label class="club-choice-wrap">${escapeHtml(match.home)} · club/country<input class="club-choice" type="text" maxlength="60" aria-label="${escapeHtml(match.home)} club or country" data-key="${match.key}" data-side="home" value="${escapeHtml(s.homeClub || "")}" placeholder="Enter club or country" ${readOnly || !isEditorUnlocked() ? "disabled" : ""}></label><label class="club-choice-wrap">${escapeHtml(match.away)} · club/country<input class="club-choice" type="text" maxlength="60" aria-label="${escapeHtml(match.away)} club or country" data-key="${match.key}" data-side="away" value="${escapeHtml(s.awayClub || "")}" placeholder="Enter club or country" ${readOnly || !isEditorUnlocked() ? "disabled" : ""}></label></div>`
           : "";
         return `<div class="match"><div class="side"><span class="crest">${escapeHtml(match.home.slice(0, 2).toUpperCase())}</span><span>${escapeHtml(match.home)}</span></div><div><div class="score"><input type="number" min="0" max="99" inputmode="numeric" aria-label="${escapeHtml(match.home)} goals" data-team="home" data-key="${match.key}" value="${s.home}" placeholder="–" ${readOnly ? "disabled" : ""}><span class="dash">:</span><input type="number" min="0" max="99" inputmode="numeric" aria-label="${escapeHtml(match.away)} goals" data-team="away" data-key="${match.key}" value="${s.away}" placeholder="–" ${readOnly ? "disabled" : ""}></div><div class="status">${played ? "FULL TIME" : "UPCOMING"}</div>${penalty}</div><div class="side away"><span>${escapeHtml(match.away)}</span><span class="crest">${escapeHtml(match.away.slice(0, 2).toUpperCase())}</span></div>${clubChoices}</div>`;
       }
@@ -1582,6 +1590,22 @@
           sessionStorage.setItem("shift-team-c-editor-key", key);
         }
         return key;
+      }
+      async function unlockClubEditing() {
+        const key = prompt("Enter the league editor key to edit Season 2 club/country choices:");
+        if (!key) return;
+        try {
+          const res = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "x-league-key": key },
+          });
+          if (!res.ok) throw new Error("Editor key rejected");
+          sessionStorage.setItem("shift-team-c-editor-key", key);
+          render();
+          showToast("Admin editing enabled for this tab");
+        } catch (error) {
+          showToast(error.message || "Could not verify editor key");
+        }
       }
       async function persist() {
         const key = await editorKey();
@@ -1865,6 +1889,7 @@
           startSeason(season);
       };
       $("#newSeason").onclick = addNewSeason;
+      $("#clubAdminUnlock").onclick = unlockClubEditing;
       $("#switchToGroups").onclick = switchActiveSeasonToGroups;
       $("#seasonSelect").onchange = (e) => {
         viewingSeasonId = e.target.value;

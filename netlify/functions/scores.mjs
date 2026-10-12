@@ -52,6 +52,12 @@ function validState(data) {
 }
 
 export default async (request) => {
+  if (request.method === "POST") {
+    if (!process.env.LEAGUE_EDIT_KEY) return json({ error: "Editor key is not configured" }, 503);
+    if (!validEditorKey(request.headers.get("x-league-key"))) return json({ error: "Invalid editor key" }, 401);
+    return json({ authorized: true });
+  }
+
   if (request.method === "GET") {
     const state = await store.get(dataKey, { type: "json" });
     const legacyScores = await store.get(legacyKey, { type: "json" });
