@@ -289,6 +289,35 @@
       .score input::-webkit-inner-spin-button {
         -webkit-appearance: none;
       }
+      .club-choices {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        padding-top: 2px;
+      }
+      .club-choice-wrap {
+        display: grid;
+        gap: 4px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .club-choice {
+        width: 100%;
+        min-width: 0;
+        color: var(--text);
+        background: #111614;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 7px 9px;
+      }
+      .club-choice:focus {
+        outline: 0;
+        border-color: var(--green);
+      }
+      .club-choice:disabled {
+        opacity: 0.9;
+      }
       .dash {
         color: #728078;
         font-weight: 800;
@@ -1340,12 +1369,16 @@
       function matchHtml(season, match, readOnly = false, penaltyTeams = []) {
         const s = season.scores[match.key] || blankScore(),
           played = isPlayed(s),
+          showClubChoices = season.id === "s2",
           needsPenalty =
             penaltyTeams.length === 2 && played && +s.home === +s.away;
         const penalty = needsPenalty
           ? `<div class="tie-break"><label>Level on aggregate · choose penalty winner</label><select class="select penalty-select" data-team="winner" data-key="${match.key}" ${readOnly ? "disabled" : ""}><option value="">Choose winner</option>${penaltyTeams.map((t) => `<option value="${escapeHtml(t)}" ${s.winner === t ? "selected" : ""}>${escapeHtml(t)}</option>`).join("")}</select></div>`
           : "";
-        return `<div class="match"><div class="side"><span class="crest">${escapeHtml(match.home.slice(0, 2).toUpperCase())}</span><span>${escapeHtml(match.home)}</span></div><div><div class="score"><input type="number" min="0" max="99" inputmode="numeric" aria-label="${escapeHtml(match.home)} goals" data-team="home" data-key="${match.key}" value="${s.home}" placeholder="–" ${readOnly ? "disabled" : ""}><span class="dash">:</span><input type="number" min="0" max="99" inputmode="numeric" aria-label="${escapeHtml(match.away)} goals" data-team="away" data-key="${match.key}" value="${s.away}" placeholder="–" ${readOnly ? "disabled" : ""}></div><div class="status">${played ? "FULL TIME" : "UPCOMING"}</div>${penalty}</div><div class="side away"><span>${escapeHtml(match.away)}</span><span class="crest">${escapeHtml(match.away.slice(0, 2).toUpperCase())}</span></div></div>`;
+        const clubChoices = showClubChoices
+          ? `<div class="club-choices"><label class="club-choice-wrap">${escapeHtml(match.home)} · club/country<input class="club-choice" type="text" maxlength="60" aria-label="${escapeHtml(match.home)} club or country" data-key="${match.key}" data-side="home" value="${escapeHtml(s.homeClub || "")}" placeholder="Enter club or country" ${readOnly ? "disabled" : ""}></label><label class="club-choice-wrap">${escapeHtml(match.away)} · club/country<input class="club-choice" type="text" maxlength="60" aria-label="${escapeHtml(match.away)} club or country" data-key="${match.key}" data-side="away" value="${escapeHtml(s.awayClub || "")}" placeholder="Enter club or country" ${readOnly ? "disabled" : ""}></label></div>`
+          : "";
+        return `<div class="match"><div class="side"><span class="crest">${escapeHtml(match.home.slice(0, 2).toUpperCase())}</span><span>${escapeHtml(match.home)}</span></div><div><div class="score"><input type="number" min="0" max="99" inputmode="numeric" aria-label="${escapeHtml(match.home)} goals" data-team="home" data-key="${match.key}" value="${s.home}" placeholder="–" ${readOnly ? "disabled" : ""}><span class="dash">:</span><input type="number" min="0" max="99" inputmode="numeric" aria-label="${escapeHtml(match.away)} goals" data-team="away" data-key="${match.key}" value="${s.away}" placeholder="–" ${readOnly ? "disabled" : ""}></div><div class="status">${played ? "FULL TIME" : "UPCOMING"}</div>${penalty}</div><div class="side away"><span>${escapeHtml(match.away)}</span><span class="crest">${escapeHtml(match.away.slice(0, 2).toUpperCase())}</span></div>${clubChoices}</div>`;
       }
       function renderPlayoffs(season, which) {
         const box = $("#fixtures"),
@@ -1479,6 +1512,9 @@
         document
           .querySelectorAll("#fixtures .penalty-select")
           .forEach((e) => e.addEventListener("change", onScore));
+        document
+          .querySelectorAll("#fixtures .club-choice")
+          .forEach((e) => e.addEventListener("input", onClubChoice));
       }
       function renderFixtures(season) {
         if (!season.schedule.length) {
@@ -1669,6 +1705,18 @@
           isPlayed(season.scores[key])
         )
           renderFixtures(season);
+      }
+      function onClubChoice(event) {
+        const el = event.target,
+          season = seasonById(viewingSeasonId),
+          key = el.dataset.key,
+          side = el.dataset.side;
+        if (season?.id !== "s2" || !canEditScores(season)) return;
+        season.scores[key] ??= blankScore();
+        season.scores[key][`${side}Club`] = el.value.slice(0, 60);
+        $("#saved").textContent = "Unsaved changes";
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(persist, 450);
       }
       function startSeason(season) {
         if (season.teams.length < 4) return;

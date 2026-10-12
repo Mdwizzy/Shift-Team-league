@@ -42,6 +42,9 @@ function validState(data) {
         const value = result[side];
         if (typeof value !== "string" || (value !== "" && !/^\d{1,2}$/.test(value))) return false;
       }
+      for (const side of ["homeClub", "awayClub"]) {
+        if (result[side] !== undefined && (typeof result[side] !== "string" || result[side].length > 60)) return false;
+      }
       if (result.winner !== undefined && result.winner !== "" && !season.teams.includes(result.winner)) return false;
     }
   }
