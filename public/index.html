@@ -130,6 +130,15 @@
         grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
         gap: 17px;
       }
+      .club-usage-card {
+        grid-column: 1 / -1;
+      }
+      #clubUsageBody tr.team-first td {
+        border-top: 1px solid var(--line);
+      }
+      #clubUsageBody tr:first-child td {
+        border-top: 0;
+      }
       .card {
         background: linear-gradient(145deg, #1b211f, #171c1a);
         border: 1px solid var(--line);
@@ -745,6 +754,23 @@
           </div>
         </section>
       </div>
+      <section class="card club-usage-card hidden" id="clubUsageCard" aria-live="polite">
+        <div class="card-head">
+          <div>
+            <h2>Club &amp; country use</h2>
+            <div class="hint" id="clubUsageHint">Season 2 · choices recorded for each match</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Team</th><th>Club / country</th><th>Times used</th></tr>
+            </thead>
+            <tbody id="clubUsageBody"></tbody>
+          </table>
+        </div>
+        <div class="table-foot">Counts show how many matches each team selected that club or country.</div>
+      </section>
       <div class="toast" id="toast"></div>
     </main>
     <script>
@@ -1202,6 +1228,83 @@
             ]
           : null;
       }
+      function clubUsageMatches(season) {
+        const matches = new Map();
+        const add = (match) => {
+          if (match?.key && match.home && match.away)
+            matches.set(match.key, { home: match.home, away: match.away });
+        };
+        season.schedule.flatMap((day) => day.games).forEach(add);
+        if (usesGroups(season)) {
+          for (let md = 1; md <= 3; md++) groupGames(season, md).forEach(add);
+        }
+        if (usesQuarterfinals(season)) {
+          quarterPairings(season).forEach(([top, bottom], i) => {
+            if (!top || !bottom) return;
+            add({ home: bottom, away: top, key: `qf${i + 1}-leg1` });
+            add({ home: top, away: bottom, key: `qf${i + 1}-leg2` });
+          });
+        }
+        const pairs = semiPairings(season);
+        if (pairs) {
+          pairs.forEach((pair, i) => {
+            add(makeSemiGame(pair[0], pair[1], `semi${i + 1}`, false));
+            add(makeSemiGame(pair[0], pair[1], `semi${i + 1}`, true));
+          });
+          const results = pairs.map((pair, i) =>
+            twoLegResult(
+              season,
+              pair[0],
+              pair[1],
+              `semi${i + 1}-leg1`,
+              `semi${i + 1}-leg2`,
+            ),
+          );
+          if (results.every((result) => result.winner && result.loser)) {
+            add({ home: results[0].winner, away: results[1].winner, key: "final" });
+            add({ home: results[0].loser, away: results[1].loser, key: "third-place" });
+          }
+        }
+        return matches;
+      }
+      function renderClubUsage(season) {
+        const card = $("#clubUsageCard");
+        const visible = season?.id === "s2" && season.schedule.length > 0;
+        card.classList.toggle("hidden", !visible);
+        if (!visible) return;
+        const usage = new Map(season.teams.map((team) => [team, new Map()]));
+        for (const [key, match] of clubUsageMatches(season)) {
+          const score = season.scores[key];
+          if (!score) continue;
+          [[match.home, score.homeClub], [match.away, score.awayClub]].forEach(([team, rawName]) => {
+            const name = typeof rawName === "string" ? rawName.trim() : "";
+            if (!name || !usage.has(team)) return;
+            const perTeam = usage.get(team), normalized = name.toLocaleLowerCase();
+            const existing = perTeam.get(normalized);
+            if (existing) existing.count++;
+            else perTeam.set(normalized, { name, count: 1 });
+          });
+        }
+        const rows = [];
+        for (const team of season.teams) {
+          const choices = [...usage.get(team).values()].sort(
+            (a, b) => b.count - a.count || a.name.localeCompare(b.name),
+          );
+          if (!choices.length) {
+            rows.push(`<tr class="team-first"><td>${escapeHtml(team)}</td><td class="hint">No club or country recorded yet</td><td>—</td></tr>`);
+            continue;
+          }
+          choices.forEach((choice, index) => {
+            rows.push(`<tr class="${index === 0 ? "team-first" : ""}"><td>${index === 0 ? escapeHtml(team) : ""}</td><td>${escapeHtml(choice.name)}</td><td class="pts">${choice.count}</td></tr>`);
+          });
+        }
+        $("#clubUsageBody").innerHTML = rows.join("");
+        const recorded = [...usage.values()].reduce(
+          (sum, perTeam) => sum + [...perTeam.values()].reduce((n, choice) => n + choice.count, 0),
+          0,
+        );
+        $("#clubUsageHint").textContent = `Season 2 · ${recorded} club/country selections recorded`;
+      }
       function makeSemiGame(top, bottom, tie, second) {
         return second
           ? { home: top, away: bottom, key: `${tie}-leg2` }
@@ -1561,6 +1664,7 @@
         fillStageOptions(season);
         renderTable(season);
         renderFixtures(season);
+        renderClubUsage(season);
       }
       function escapeHtml(value) {
         return String(value).replace(
@@ -1712,7 +1816,10 @@
         setStatus(season);
         $("#saved").textContent = "Unsaved changes";
         clearTimeout(saveTimer);
-        saveTimer = setTimeout(persist, 450);
+        saveTimer = setTimeout(() => {
+          persist();
+          renderClubUsage(season);
+        }, 450);
         renderTable(season);
         const match = el.closest(".match");
         if (match)
@@ -1740,7 +1847,10 @@
         season.scores[key][`${side}Club`] = el.value.slice(0, 60);
         $("#saved").textContent = "Unsaved changes";
         clearTimeout(saveTimer);
-        saveTimer = setTimeout(persist, 450);
+        saveTimer = setTimeout(() => {
+          persist();
+          renderClubUsage(season);
+        }, 450);
       }
       function startSeason(season) {
         if (season.teams.length < 4) return;
