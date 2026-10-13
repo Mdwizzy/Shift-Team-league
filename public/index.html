@@ -133,11 +133,75 @@
       .club-usage-card {
         grid-column: 1 / -1;
       }
-      #clubUsageBody tr.team-first td {
-        border-top: 1px solid var(--line);
+      .club-usage-toolbar {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 0 21px 15px;
       }
-      #clubUsageBody tr:first-child td {
-        border-top: 0;
+      .club-usage-select-label {
+        display: grid;
+        gap: 5px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .club-usage-summary {
+        color: var(--muted);
+        font-size: 12px;
+        text-align: right;
+      }
+      .club-usage-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        padding: 0 21px 18px;
+      }
+      .club-usage-team {
+        min-width: 0;
+        padding: 13px 14px 10px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel2);
+      }
+      .club-usage-team-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 6px;
+        font-weight: 800;
+      }
+      .club-usage-total {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .club-usage-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 6px 0;
+        border-top: 1px solid #ffffff0b;
+      }
+      .club-usage-row strong {
+        color: var(--green);
+        white-space: nowrap;
+      }
+      @media (max-width: 560px) {
+        .club-usage-grid {
+          grid-template-columns: 1fr;
+          padding-inline: 14px;
+        }
+        .club-usage-toolbar {
+          align-items: flex-start;
+          flex-direction: column;
+          padding-inline: 14px;
+        }
+        .club-usage-summary {
+          text-align: left;
+        }
       }
       .card {
         background: linear-gradient(145deg, #1b211f, #171c1a);
@@ -758,17 +822,18 @@
         <div class="card-head">
           <div>
             <h2>Club &amp; country use</h2>
-            <div class="hint" id="clubUsageHint">Season 2 · choices recorded for each match</div>
+            <div class="hint">Season 2 · choices recorded for each match</div>
           </div>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Team</th><th>Club / country</th><th>Times used</th></tr>
-            </thead>
-            <tbody id="clubUsageBody"></tbody>
-          </table>
+        <div class="club-usage-toolbar">
+          <label class="club-usage-select-label">Show teams
+            <select class="select" id="clubUsageTeamSelect" aria-label="Filter club and country usage by team">
+              <option value="all">All teams</option>
+            </select>
+          </label>
+          <div class="club-usage-summary" id="clubUsageSummary" aria-live="polite">0 teams · 0 selections</div>
         </div>
+        <div class="club-usage-grid" id="clubUsageGrid" aria-live="polite"></div>
         <div class="table-foot">Counts show how many matches each team selected that club or country.</div>
       </section>
       <div class="toast" id="toast"></div>
@@ -1285,25 +1350,29 @@
             else perTeam.set(normalized, { name, count: 1 });
           });
         }
-        const rows = [];
-        for (const team of season.teams) {
+        const filter = $("#clubUsageTeamSelect"),
+          selected = filter.value || "all";
+        filter.innerHTML = `<option value="all">All teams</option>${season.teams.map((team) => `<option value="${escapeHtml(team)}">${escapeHtml(team)}</option>`).join("")}`;
+        filter.value = season.teams.includes(selected) ? selected : "all";
+        const selectedTeams = filter.value === "all"
+          ? season.teams
+          : season.teams.filter((team) => team === filter.value);
+        const cards = [];
+        let recorded = 0;
+        for (const team of selectedTeams) {
           const choices = [...usage.get(team).values()].sort(
             (a, b) => b.count - a.count || a.name.localeCompare(b.name),
           );
+          const teamTotal = choices.reduce((sum, choice) => sum + choice.count, 0);
+          recorded += teamTotal;
           if (!choices.length) {
-            rows.push(`<tr class="team-first"><td>${escapeHtml(team)}</td><td class="hint">No club or country recorded yet</td><td>—</td></tr>`);
+            cards.push(`<section class="club-usage-team"><div class="club-usage-team-title"><span>${escapeHtml(team)}</span><span class="club-usage-total">0 total uses</span></div><div class="club-usage-row hint">No club or country recorded yet</div></section>`);
             continue;
           }
-          choices.forEach((choice, index) => {
-            rows.push(`<tr class="${index === 0 ? "team-first" : ""}"><td>${index === 0 ? escapeHtml(team) : ""}</td><td>${escapeHtml(choice.name)}</td><td class="pts">${choice.count}</td></tr>`);
-          });
+          cards.push(`<section class="club-usage-team"><div class="club-usage-team-title"><span>${escapeHtml(team)}</span><span class="club-usage-total">${teamTotal} total uses</span></div>${choices.map((choice) => `<div class="club-usage-row"><span>${escapeHtml(choice.name)}</span><strong>${choice.count} ${choice.count === 1 ? "use" : "uses"}</strong></div>`).join("")}</section>`);
         }
-        $("#clubUsageBody").innerHTML = rows.join("");
-        const recorded = [...usage.values()].reduce(
-          (sum, perTeam) => sum + [...perTeam.values()].reduce((n, choice) => n + choice.count, 0),
-          0,
-        );
-        $("#clubUsageHint").textContent = `Season 2 · ${recorded} club/country selections recorded`;
+        $("#clubUsageGrid").innerHTML = cards.join("");
+        $("#clubUsageSummary").textContent = `${selectedTeams.length} ${selectedTeams.length === 1 ? "team" : "teams"} · ${recorded} selections`;
       }
       function makeSemiGame(top, bottom, tie, second) {
         return second
@@ -2006,6 +2075,8 @@
         stageValue = "league-0";
         render();
       };
+      $("#clubUsageTeamSelect").onchange = () =>
+        renderClubUsage(seasonById(viewingSeasonId));
       $("#stageSelect").onchange = (e) => {
         stageValue = e.target.value;
         renderFixtures(seasonById(viewingSeasonId));
